@@ -2,14 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="ChatCAR">
-<meta name="theme-color" content="#cc1a1a">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.jpeg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AutoGestor — Administración de Vehículos</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap');
@@ -337,23 +330,6 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-
-  /* ── MOBILE FIXES ── */
-  @media (max-width: 600px) {
-    .header { padding: 0 12px; height: 56px; }
-    .logo { font-size: 18px; }
-    .logo img { height: 34px !important; }
-    .logo-sub { display: none; }
-    .nav { gap: 3px; }
-    .nav-btn { padding: 6px 8px; font-size: 11px; gap: 4px; }
-    .main { padding: 16px 10px; }
-    .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr 1fr; }
-    .filter-bar { flex-direction: column; }
-    table { font-size: 11px; }
-    th, td { padding: 7px 8px; }
-    .card { padding: 16px 12px; }
-  }
   @media (max-width: 700px) {
     .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
     .nav-btn { padding: 7px 10px; font-size: 12px; }
@@ -1169,16 +1145,6 @@ document.getElementById('modal-delete').addEventListener('click', e => { if(e.ta
   renderSelectVehiculos();
   renderUltimosGastos();
 })();
-</script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(r => console.log('ChatCAR SW OK'))
-      .catch(e => console.log('SW err', e));
-  });
-}
 </script>
 </body>
 </html>
