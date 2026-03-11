@@ -354,6 +354,11 @@
     <button class="nav-btn" onclick="showSection('km')" id="nav-km">📍 Kilómetros</button>
     <button class="nav-btn" onclick="showSection('mant')" id="nav-mant">🔧 Mantenimiento</button>
   </nav>
+  <div style="display:flex;gap:6px;margin-left:12px;border-left:1px solid var(--border);padding-left:12px;">
+    <button class="nav-btn" onclick="exportarDatos()" title="Exportar datos">📤 Exportar</button>
+    <button class="nav-btn" onclick="document.getElementById('import-file').click()" title="Importar datos">📥 Importar</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(event)">
+  </div>
 </header>
 
 <main class="main">
@@ -1145,6 +1150,67 @@ document.getElementById('modal-delete').addEventListener('click', e => { if(e.ta
   renderSelectVehiculos();
   renderUltimosGastos();
 })();
+
+// ══════════════════════════════════════════════════════════════════
+//  EXPORTAR / IMPORTAR
+// ══════════════════════════════════════════════════════════════════
+function exportarDatos() {
+  const total = gastos.length + kmRegistros.length + mantenimientos.length + vehiculos.length;
+  if (total === 0) { alert('No hay datos para exportar.'); return; }
+  const exportData = {
+    version: '1.0',
+    fecha: new Date().toISOString(),
+    app: 'ChatCAR',
+    gastos: gastos,
+    vehiculos: vehiculos,
+    km: kmRegistros,
+    mantenimientos: mantenimientos
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = 'ChatCAR_backup_' + fecha + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarDatos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!imported.app || imported.app !== 'ChatCAR') {
+        alert('El archivo no es un backup válido de ChatCAR.');
+        return;
+      }
+      const msg = '¿Importar este backup?\n\nFecha: ' + (imported.fecha ? imported.fecha.split('T')[0] : 'desconocida') +
+        '\nVehículos: ' + (imported.vehiculos||[]).length +
+        '\nGastos: ' + (imported.gastos||[]).length +
+        '\nKm: ' + (imported.km||[]).length +
+        '\nMantenimientos: ' + (imported.mantenimientos||[]).length +
+        '\n\nATENCIÓN: Reemplazará todos tus datos actuales.';
+      if (!confirm(msg)) { event.target.value = ''; return; }
+      gastos = imported.gastos || [];
+      vehiculos = imported.vehiculos || [];
+      kmRegistros = imported.km || [];
+      mantenimientos = imported.mantenimientos || [];
+      save();
+      renderVehiculos();
+      renderSelectVehiculos();
+      renderUltimosGastos();
+      alert('Datos importados correctamente.');
+    } catch(err) {
+      alert('Error al leer el archivo.');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
 </script>
 </body>
 </html>
