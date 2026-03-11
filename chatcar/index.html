@@ -1189,26 +1189,110 @@ function importarDatos(event) {
       const imported = JSON.parse(e.target.result);
       if (!imported.app || imported.app !== 'ChatCAR') {
         alert('El archivo no es un backup válido de ChatCAR.');
+        event.target.value = '';
         return;
       }
-      const msg = '¿Importar este backup?\n\nFecha: ' + (imported.fecha ? imported.fecha.split('T')[0] : 'desconocida') +
-        '\nVehículos: ' + (imported.vehiculos||[]).length +
-        '\nGastos: ' + (imported.gastos||[]).length +
-        '\nKm: ' + (imported.km||[]).length +
-        '\nMantenimientos: ' + (imported.mantenimientos||[]).length +
-        '\n\nATENCIÓN: Reemplazará todos tus datos actuales.';
-      if (!confirm(msg)) { event.target.value = ''; return; }
-      gastos = imported.gastos || [];
-      vehiculos = imported.vehiculos || [];
-      kmRegistros = imported.km || [];
-      mantenimientos = imported.mantenimientos || [];
-      save();
-      renderVehiculos();
-      renderSelectVehiculos();
-      renderUltimosGastos();
-      alert('Datos importados correctamente.');
+
+      const impVehiculos = imported.vehiculos || [];
+      const impGastos    = imported.gastos || [];
+      const impKm        = imported.km || [];
+      const impMant      = imported.mantenimientos || [];
+      const fecha        = imported.fecha ? imported.fecha.split('T')[0] : 'desconocida';
+
+      // ── Diálogo: importar TODO o por vehículo ──
+      let modo = '';
+      if (impVehiculos.length > 1) {
+        // Armar lista de vehículos del backup para mostrar
+        const lista = impVehiculos.map((v,i) => (i+1) + ') ' + (v.nombre || v.patente || 'Vehículo ' + (i+1))).join('\n');
+        const resp = confirm(
+          '📦 Backup del ' + fecha +
+          '\n\nVehículos en el backup:\n' + lista +
+          '\n\n¿Querés importar UN vehículo específico?\n\n' +
+          'OK = Elegir vehículo\nCancelar = Importar TODO (reemplaza todo)'
+        );
+        modo = resp ? 'vehiculo' : 'todo';
+      } else {
+        modo = 'todo';
+      }
+
+      if (modo === 'vehiculo') {
+        // Pedir número de vehículo
+        const lista = impVehiculos.map((v,i) => (i+1) + ') ' + (v.nombre || v.patente || 'Vehículo ' + (i+1))).join('\n');
+        const eleccion = prompt(
+          'Escribí el NÚMERO del vehículo a importar:\n\n' + lista
+        );
+        const idx = parseInt(eleccion) - 1;
+        if (isNaN(idx) || idx < 0 || idx >= impVehiculos.length) {
+          alert('Número inválido. Importación cancelada.');
+          event.target.value = '';
+          return;
+        }
+
+        const vImportar = impVehiculos[idx];
+        const vidOrig   = vImportar.id;
+
+        // Verificar si ese vehículo ya existe en la app (por patente o nombre)
+        const yaExiste = vehiculos.find(v =>
+          (vImportar.patente && v.patente === vImportar.patente) ||
+          (vImportar.nombre  && v.nombre  === vImportar.nombre)
+        );
+
+        let vidFinal = vidOrig;
+        if (yaExiste) {
+          // Actualizar vehículo existente
+          vidFinal = yaExiste.id;
+          const vi = vehiculos.findIndex(v => v.id === yaExiste.id);
+          vehiculos[vi] = { ...vImportar, id: vidFinal };
+          // Borrar datos anteriores de ese vehículo
+          gastos       = gastos.filter(g => g.vehiculoId !== vidFinal);
+          kmRegistros  = kmRegistros.filter(k => k.vehiculoId !== vidFinal);
+          mantenimientos = mantenimientos.filter(m => m.vehiculoId !== vidFinal);
+        } else {
+          // Agregar vehículo nuevo
+          vehiculos.push(vImportar);
+        }
+
+        // Importar datos del vehículo elegido (reasignando id si cambió)
+        impGastos.filter(g => g.vehiculoId === vidOrig).forEach(g => {
+          gastos.push({ ...g, vehiculoId: vidFinal });
+        });
+        impKm.filter(k => k.vehiculoId === vidOrig).forEach(k => {
+          kmRegistros.push({ ...k, vehiculoId: vidFinal });
+        });
+        impMant.filter(m => m.vehiculoId === vidOrig).forEach(m => {
+          mantenimientos.push({ ...m, vehiculoId: vidFinal });
+        });
+
+        save();
+        renderVehiculos();
+        renderSelectVehiculos();
+        renderUltimosGastos();
+        alert('✅ Vehículo "' + (vImportar.nombre || vImportar.patente) + '" importado correctamente.\n\nLos demás vehículos no fueron modificados.');
+
+      } else {
+        // Importar TODO
+        if (!confirm(
+          '⚠️ Importar TODO el backup del ' + fecha + '\n\n' +
+          'Vehículos: ' + impVehiculos.length + '\n' +
+          'Gastos: ' + impGastos.length + '\n' +
+          'Km: ' + impKm.length + '\n' +
+          'Mantenimientos: ' + impMant.length + '\n\n' +
+          'ATENCIÓN: Reemplazará TODOS tus datos actuales.'
+        )) { event.target.value = ''; return; }
+
+        gastos         = impGastos;
+        vehiculos      = impVehiculos;
+        kmRegistros    = impKm;
+        mantenimientos = impMant;
+        save();
+        renderVehiculos();
+        renderSelectVehiculos();
+        renderUltimosGastos();
+        alert('✅ Todos los datos importados correctamente.');
+      }
+
     } catch(err) {
-      alert('Error al leer el archivo.');
+      alert('Error al leer el archivo. Asegurate de que sea un backup válido de ChatCAR.');
     }
     event.target.value = '';
   };
