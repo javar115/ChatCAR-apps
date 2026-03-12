@@ -334,25 +334,88 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-  /* Ham menu link style */
-  .hamburger-menu a.ham-btn {
+  /* ── HAMBURGER BUTTON ── */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-left: auto;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: all 0.25s ease;
+    transform-origin: center;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ── HAMBURGER DROPDOWN MENU ── */
+  .hamburger-menu {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 62px;
+    right: 12px;
+    width: 230px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 999;
+    overflow: hidden;
+  }
+  .hamburger-menu.open {
+    display: flex;
+  }
+  .ham-btn {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 14px 18px;
+    background: transparent;
+    border: none;
     color: var(--text);
+    cursor: pointer;
+    text-align: left;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    transition: background 0.15s;
     text-decoration: none;
+    width: 100%;
   }
-  .hamburger-menu a.ham-btn:hover {
+  .ham-btn:hover, .ham-btn.active {
     background: var(--accent-dim);
     color: var(--accent);
   }
-    @media (max-width: 700px) {
+  .ham-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  @media (max-width: 700px) {
     .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
     .nav-btn { padding: 7px 10px; font-size: 12px; }
     .stats-grid { grid-template-columns: 1fr 1fr; }
-    /* Hide km and mant from top nav on mobile — they live in hamburger */
+    /* Show hamburger, hide desktop-only elements */
+    .hamburger { display: flex !important; }
     #nav-km, #nav-mant { display: none !important; }
-    /* Hide export/import div on mobile */
     .nav-desktop { display: none !important; }
   }
 </style>
