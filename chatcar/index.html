@@ -1623,7 +1623,11 @@ function importarDatos(event) {
   reader.onload = function(e) {
     try {
       const imported = JSON.parse(e.target.result);
-      if (!imported.app || imported.app !== 'ChatCAR') {
+      // Accept old backups (may not have 'app' field) and new ones
+      const appValido = !imported.app || imported.app === 'ChatCAR';
+      // Must have at least vehiculos or gastos
+      const tieneData = imported.vehiculos || imported.gastos;
+      if (!appValido || !tieneData) {
         alert('El archivo no es un backup válido de ChatCAR.');
         event.target.value = '';
         return;
@@ -1733,7 +1737,7 @@ function importarDatos(event) {
       }
 
     } catch(err) {
-      alert('Error al leer el archivo. Asegurate de que sea un backup válido de ChatCAR.');
+      alert('Error al leer el archivo. Asegurate de que sea un backup válido de ChatCAR.\n\nDetalle: ' + err.message);
     }
     event.target.value = '';
   };
