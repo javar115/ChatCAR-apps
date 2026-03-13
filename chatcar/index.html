@@ -837,12 +837,12 @@
   <!-- ════════════════════════ 6. UTILIDADES ════════════════════════ -->
   <section id="sec-utilidades" class="section">
     <div class="page-title">📈 Reporte de <span>Utilidades</span></div>
-    <p class="page-desc">Comparación de ingresos vs gastos por vehículo.</p>
+    <p class="page-desc">Comparación de ingresos vs gastos por vehículo y período.</p>
 
     <!-- Filtros -->
     <div class="card">
       <div class="card-title">🔍 Filtros</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
         <button class="btn btn-secondary" onclick="setRangoUtil('hoy')">Hoy</button>
         <button class="btn btn-secondary" onclick="setRangoUtil('semana')">Esta Semana</button>
         <button class="btn btn-secondary" onclick="setRangoUtil('mes')">Este Mes</button>
@@ -861,6 +861,31 @@
         <div class="form-group">
           <label>Vehículo</label>
           <select id="util-vehiculo"></select>
+        </div>
+        <div class="form-group">
+          <label>Fuente de Ingreso</label>
+          <select id="util-fuente">
+            <option value="">Todas</option>
+            <option value="Uber">Uber</option>
+            <option value="Didi">Didi</option>
+            <option value="Cabify">Cabify</option>
+            <option value="MercadoLibre">MercadoLibre</option>
+            <option value="Remis">Remis</option>
+            <option value="Taxi">Taxi</option>
+            <option value="Otros">Otros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoría de Gasto</label>
+          <select id="util-categoria">
+            <option value="">Todas</option>
+            <option value="A">Combustible</option>
+            <option value="B">Servicios</option>
+            <option value="C">Repuestos</option>
+            <option value="D">Seguros</option>
+            <option value="E">Impuestos</option>
+            <option value="F">Otros</option>
+          </select>
         </div>
       </div>
       <button class="btn btn-primary" onclick="renderUtilidades()" style="margin-top:8px;">🔍 Calcular</button>
@@ -885,6 +910,28 @@
           </thead>
           <tbody id="body-utilidades"></tbody>
           <tfoot id="foot-utilidades"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detalle de ingresos -->
+    <div class="card">
+      <div class="card-title">💰 Detalle de Ingresos por Fuente</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fuente</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
+          <tbody id="body-util-fuentes"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detalle de gastos -->
+    <div class="card">
+      <div class="card-title">💳 Detalle de Gastos por Categoría</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Categoría</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
+          <tbody id="body-util-cats"></tbody>
         </table>
       </div>
     </div>
@@ -1528,44 +1575,65 @@ function setRangoUtil(rango) {
 }
 
 function renderUtilidades() {
-  const desde    = document.getElementById('util-desde').value || '2000-01-01';
-  const hasta    = document.getElementById('util-hasta').value || '2099-12-31';
-  const filtroV  = document.getElementById('util-vehiculo').value;
+  const desde     = document.getElementById('util-desde').value || '2000-01-01';
+  const hasta     = document.getElementById('util-hasta').value || '2099-12-31';
+  const filtroV   = document.getElementById('util-vehiculo').value;
+  const filtroF   = document.getElementById('util-fuente') ? document.getElementById('util-fuente').value : '';
+  const filtroC   = document.getElementById('util-categoria') ? document.getElementById('util-categoria').value : '';
 
-  // Filter by date and vehicle
-  const ingFilt = ingresos.filter(i => i.fecha >= desde && i.fecha <= hasta && (!filtroV || i.vehiculoId == filtroV));
-  const gasFilt = gastos.filter(g => g.fecha >= desde && g.fecha <= hasta && (!filtroV || g.vehiculoId == filtroV));
+  const catNames = {'A':'Combustible','B':'Servicios','C':'Repuestos','D':'Seguros','E':'Impuestos','F':'Otros'};
 
-  // Group by vehicle
+  // Filter ingresos
+  const ingFilt = ingresos.filter(i =>
+    i.fecha >= desde && i.fecha <= hasta &&
+    (!filtroV || i.vehiculoId === filtroV) &&
+    (!filtroF || i.fuente === filtroF)
+  );
+
+  // Filter gastos — gastos use field "vehiculo" (string name), not vehiculoId
+  const gasFilt = gastos.filter(g =>
+    g.fecha >= desde && g.fecha <= hasta &&
+    (!filtroV || g.vehiculo === filtroV) &&
+    (!filtroC || g.categoria === filtroC)
+  );
+
+  // ── Group by vehicle ──
   const vMap = {};
-  vehiculos.forEach(v => { vMap[v.id] = { nombre: v.nombre || v.patente || 'Vehículo', ing: 0, gas: 0 }; });
-  ingFilt.forEach(i => { if (!vMap[i.vehiculoId]) vMap[i.vehiculoId] = { nombre: '—', ing: 0, gas: 0 }; vMap[i.vehiculoId].ing += i.importe; });
-  gasFilt.forEach(g => { if (!vMap[g.vehiculoId]) vMap[g.vehiculoId] = { nombre: '—', ing: 0, gas: 0 }; vMap[g.vehiculoId].gas += g.importe; });
+  vehiculos.forEach(v => { vMap[v] = { nombre: v, ing: 0, gas: 0 }; });
+  ingFilt.forEach(i => {
+    if (!vMap[i.vehiculoId]) vMap[i.vehiculoId] = { nombre: i.vehiculoId, ing: 0, gas: 0 };
+    vMap[i.vehiculoId].ing += Number(i.importe) || 0;
+  });
+  gasFilt.forEach(g => {
+    if (!vMap[g.vehiculo]) vMap[g.vehiculo] = { nombre: g.vehiculo, ing: 0, gas: 0 };
+    vMap[g.vehiculo].gas += Number(g.importe) || 0;
+  });
 
-  // Only show vehicles that have data
   const rows = Object.entries(vMap).filter(([,d]) => d.ing > 0 || d.gas > 0);
 
-  // Totals
-  const totIng = rows.reduce((s,[,d]) => s + d.ing, 0);
-  const totGas = rows.reduce((s,[,d]) => s + d.gas, 0);
+  // ── Totals ──
+  const totIng  = rows.reduce((s,[,d]) => s + d.ing, 0);
+  const totGas  = rows.reduce((s,[,d]) => s + d.gas, 0);
   const totUtil = totIng - totGas;
   const totRatio = totGas > 0 ? (totIng / totGas).toFixed(2) : '—';
 
-  // Stats cards
+  // ── Stats cards ──
   const statsEl = document.getElementById('stats-utilidades');
   const colorUtil = totUtil >= 0 ? '#1a7a3a' : '#cc1a1a';
   statsEl.innerHTML = `
     <div class="stat-card"><div class="stat-label">💰 Ingresos Totales</div><div class="stat-value" style="color:#1a7a3a">${fmt(totIng)}</div></div>
     <div class="stat-card"><div class="stat-label">💳 Gastos Totales</div><div class="stat-value" style="color:#cc1a1a">${fmt(totGas)}</div></div>
     <div class="stat-card"><div class="stat-label">📈 Utilidad Total</div><div class="stat-value" style="color:${colorUtil}">${fmt(totUtil)}</div></div>
-    <div class="stat-card"><div class="stat-label">⚖️ Ratio General</div><div class="stat-value">${totRatio}${totRatio !== '—' ? 'x' : ''}</div></div>
+    <div class="stat-card"><div class="stat-label">⚖️ Ratio General</div><div class="stat-value">${totRatio !== '—' ? totRatio + 'x' : '—'}</div></div>
   `;
 
-  // Table rows
+  // ── Table by vehicle ──
   const tbody = document.getElementById('body-utilidades');
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3)">Sin datos en el período seleccionado</td></tr>';
     document.getElementById('foot-utilidades').innerHTML = '';
+    document.getElementById('body-util-fuentes').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin datos</td></tr>';
+    document.getElementById('body-util-cats').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin datos</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(([,d]) => {
@@ -1581,7 +1649,6 @@ function renderUtilidades() {
     </tr>`;
   }).join('');
 
-  // Footer totals
   const colorTot = totUtil >= 0 ? '#1a7a3a' : '#cc1a1a';
   document.getElementById('foot-utilidades').innerHTML = `
     <tr style="background:var(--bg2);font-weight:700;border-top:2px solid var(--border)">
@@ -1589,8 +1656,43 @@ function renderUtilidades() {
       <td style="text-align:right;color:#1a7a3a">${fmt(totIng)}</td>
       <td style="text-align:right;color:#cc1a1a">${fmt(totGas)}</td>
       <td style="text-align:right;color:${colorTot}">${fmt(totUtil)}</td>
-      <td style="text-align:right">${totRatio}${totRatio !== '—' ? 'x' : ''}</td>
+      <td style="text-align:right">${totRatio !== '—' ? totRatio + 'x' : '—'}</td>
     </tr>`;
+
+  // ── Breakdown by fuente (ingresos) ──
+  const fuenteMap = {};
+  ingFilt.forEach(i => {
+    if (!fuenteMap[i.fuente]) fuenteMap[i.fuente] = { cant: 0, total: 0 };
+    fuenteMap[i.fuente].cant++;
+    fuenteMap[i.fuente].total += Number(i.importe) || 0;
+  });
+  const fuenteRows = Object.entries(fuenteMap).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('body-util-fuentes').innerHTML = fuenteRows.length
+    ? fuenteRows.map(([f,d]) => `<tr>
+        <td><span class="badge badge-blue">${f}</span></td>
+        <td style="text-align:right">${d.cant}</td>
+        <td style="text-align:right;color:#1a7a3a;font-weight:600">${fmt(d.total)}</td>
+        <td style="text-align:right">${totIng > 0 ? (d.total/totIng*100).toFixed(1) + '%' : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin ingresos en el período</td></tr>';
+
+  // ── Breakdown by categoria (gastos) ──
+  const catMap = {};
+  gasFilt.forEach(g => {
+    const cat = catNames[g.categoria] || g.categoria || 'Otros';
+    if (!catMap[cat]) catMap[cat] = { cant: 0, total: 0 };
+    catMap[cat].cant++;
+    catMap[cat].total += Number(g.importe) || 0;
+  });
+  const catRows = Object.entries(catMap).sort((a,b) => b[1].total - a[1].total);
+  document.getElementById('body-util-cats').innerHTML = catRows.length
+    ? catRows.map(([c,d]) => `<tr>
+        <td>${c}</td>
+        <td style="text-align:right">${d.cant}</td>
+        <td style="text-align:right;color:#cc1a1a;font-weight:600">${fmt(d.total)}</td>
+        <td style="text-align:right">${totGas > 0 ? (d.total/totGas*100).toFixed(1) + '%' : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin gastos en el período</td></tr>';
 }
 
 function exportarDatos() {
