@@ -458,6 +458,7 @@
     <button class="nav-btn" onclick="showSection('ingresos')" id="nav-ingresos">💰 Ingresos</button>
     <button class="nav-btn" onclick="showSection('reportes')" id="nav-reportes">📊 Reportes</button>
     <button class="nav-btn" onclick="showSection('utilidades')" id="nav-utilidades">📈 Utilidades</button>
+    <button class="nav-btn" onclick="showSection('vencimientos')" id="nav-vencimientos">📅 Vencimientos</button>
     <button class="nav-btn" onclick="showSection('km')" id="nav-km">📍 Kilómetros</button>
     <button class="nav-btn" onclick="showSection('mant')" id="nav-mant">🔧 Mantenimiento</button>
   </nav>
@@ -478,6 +479,7 @@
     <button class="ham-btn" onclick="showSection('ingresos');closeMenu()" id="hav-ingresos">💰 Ingresos</button>
     <button class="ham-btn" onclick="showSection('reportes');closeMenu()" id="hav-reportes">📊 Reportes</button>
     <button class="ham-btn" onclick="showSection('utilidades');closeMenu()" id="hav-utilidades">📈 Utilidades</button>
+    <button class="ham-btn" onclick="showSection('vencimientos');closeMenu()" id="hav-vencimientos">📅 Vencimientos</button>
     <button class="ham-btn" onclick="showSection('km');closeMenu()" id="hav-km">📍 Kilómetros</button>
     <button class="ham-btn" onclick="showSection('mant');closeMenu()" id="hav-mant">🔧 Mantenimiento</button>
     <div class="ham-divider"></div>
@@ -935,7 +937,246 @@
         </table>
       </div>
     </div>
+  
+  <!-- ════════════════════════ 7. VENCIMIENTOS ════════════════════════ -->
+  <section id="sec-vencimientos" class="section">
+    <div class="page-title">📅 <span>Vencimientos</span></div>
+    <p class="page-desc">Registrá gastos con fecha de vencimiento: seguros, patentes y otros. Pagalos con un clic y se agregan automáticamente al registro de gastos.</p>
+
+    <div id="venc-alert" class="hidden"></div>
+
+    <!-- Formulario nuevo vencimiento -->
+    <div class="card">
+      <div class="card-title">📋 Nuevo Vencimiento</div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Vehículo *</label>
+          <select id="venc-vehiculo"></select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento *</label>
+          <input type="date" id="venc-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe *</label>
+          <input type="number" id="venc-importe" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Categoría *</label>
+          <select id="venc-categoria" onchange="actualizarSubcatVenc()">
+            <option value="">— Seleccionar —</option>
+            <option value="D">D) Seguros</option>
+            <option value="E">E) Patentes</option>
+            <option value="F">F) Otros gastos</option>
+          </select>
+        </div>
+        <div class="form-group" id="venc-subcat-wrap" style="display:none">
+          <label>Subcategoría</label>
+          <select id="venc-subcategoria"></select>
+        </div>
+        <div class="form-group">
+          <label>Comercio / Proveedor</label>
+          <input type="text" id="venc-comercio" placeholder="Ej: La Caja Seguros">
+        </div>
+        <div class="form-group" style="grid-column:span 2">
+          <label>Comentarios <span style="font-weight:400;color:var(--text3)">(opcional, máx. 140 car.)</span></label>
+          <input type="text" id="venc-comentarios" maxlength="140" placeholder="Notas..." oninput="contarVencComent()">
+          <div id="venc-coment-count" class="char-count">0 / 140</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="btn btn-primary" onclick="guardarVencimiento()">💾 Guardar Vencimiento</button>
+        <button class="btn btn-secondary" onclick="limpiarVencimiento()">🗑 Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Lista de vencimientos -->
+    <div class="card">
+      <div class="card-title">📋 Vencimientos Registrados</div>
+      <div class="table-wrap">
+        <table id="tabla-vencimientos">
+          <thead>
+            <tr>
+              <th>Vencimiento</th>
+              <th>Vehículo</th>
+              <th>Categoría</th>
+              <th>Comercio</th>
+              <th style="text-align:right">Importe</th>
+              <th>Estado</th>
+              <th style="text-align:center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="body-vencimientos"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
+
+  <!-- MODAL PAGAR VENCIMIENTO -->
+  <div class="modal-overlay" id="modal-pagar" style="display:none" onclick="cerrarModalPagar(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">💳 Registrar Pago</div>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos del pago. Al confirmar se agregará automáticamente al registro de Gastos.</p>
+      <input type="hidden" id="pagar-venc-id">
+      <div class="form-grid cols-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Fecha de Pago *</label>
+          <input type="date" id="pagar-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe Pagado *</label>
+          <input type="number" id="pagar-importe" min="0" step="0.01">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFICAR VENCIMIENTO -->
+  <div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="cerrarModalModificarVenc(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">✏️ Modificar Vencimiento</div>
+      <input type="hidden" id="mod-venc-id">
+      <div class="form-grid cols-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Fecha de Vencimiento *</label>
+          <input type="date" id="mod-venc-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe *</label>
+          <input type="number" id="mod-venc-importe" min="0" step="0.01">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarModificarVenc()">💾 Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+  <!-- ════════════════════════ 7. VENCIMIENTOS ════════════════════════ -->
+  <section id="sec-vencimientos" class="section">
+    <div class="page-title">📅 <span>Vencimientos</span></div>
+    <p class="page-desc">Registrá gastos con fecha de vencimiento: seguros, patentes y otros. Pagalos con un clic y se agregan automáticamente al registro de gastos.</p>
+
+    <div id="venc-alert" class="hidden"></div>
+
+    <!-- Formulario nuevo vencimiento -->
+    <div class="card">
+      <div class="card-title">📋 Nuevo Vencimiento</div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Vehículo *</label>
+          <select id="venc-vehiculo"></select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento *</label>
+          <input type="date" id="venc-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe *</label>
+          <input type="number" id="venc-importe" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Categoría *</label>
+          <select id="venc-categoria" onchange="actualizarSubcatVenc()">
+            <option value="">— Seleccionar —</option>
+            <option value="D">D) Seguros</option>
+            <option value="E">E) Patentes</option>
+            <option value="F">F) Otros gastos</option>
+          </select>
+        </div>
+        <div class="form-group" id="venc-subcat-wrap" style="display:none">
+          <label>Subcategoría</label>
+          <select id="venc-subcategoria"></select>
+        </div>
+        <div class="form-group">
+          <label>Comercio / Proveedor</label>
+          <input type="text" id="venc-comercio" placeholder="Ej: La Caja Seguros">
+        </div>
+        <div class="form-group" style="grid-column:span 2">
+          <label>Comentarios <span style="font-weight:400;color:var(--text3)">(opcional, máx. 140 car.)</span></label>
+          <input type="text" id="venc-comentarios" maxlength="140" placeholder="Notas..." oninput="contarVencComent()">
+          <div id="venc-coment-count" class="char-count">0 / 140</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="btn btn-primary" onclick="guardarVencimiento()">💾 Guardar Vencimiento</button>
+        <button class="btn btn-secondary" onclick="limpiarVencimiento()">🗑 Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Lista de vencimientos -->
+    <div class="card">
+      <div class="card-title">📋 Vencimientos Registrados</div>
+      <div class="table-wrap">
+        <table id="tabla-vencimientos">
+          <thead>
+            <tr>
+              <th>Vencimiento</th>
+              <th>Vehículo</th>
+              <th>Categoría</th>
+              <th>Comercio</th>
+              <th style="text-align:right">Importe</th>
+              <th>Estado</th>
+              <th style="text-align:center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="body-vencimientos"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL PAGAR VENCIMIENTO -->
+  <div class="modal-overlay" id="modal-pagar" style="display:none" onclick="cerrarModalPagar(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">💳 Registrar Pago</div>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos del pago. Al confirmar se agregará automáticamente al registro de Gastos.</p>
+      <input type="hidden" id="pagar-venc-id">
+      <div class="form-grid cols-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Fecha de Pago *</label>
+          <input type="date" id="pagar-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe Pagado *</label>
+          <input type="number" id="pagar-importe" min="0" step="0.01">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL MODIFICAR VENCIMIENTO -->
+  <div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="cerrarModalModificarVenc(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">✏️ Modificar Vencimiento</div>
+      <input type="hidden" id="mod-venc-id">
+      <div class="form-grid cols-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Fecha de Vencimiento *</label>
+          <input type="date" id="mod-venc-fecha">
+        </div>
+        <div class="form-group">
+          <label>Importe *</label>
+          <input type="number" id="mod-venc-importe" min="0" step="0.01">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarModificarVenc()">💾 Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- MODAL CONFIRMACIÓN DELETE -->
@@ -966,6 +1207,7 @@ let vehiculos = DB.get('ag_vehiculos');
 let kmRegistros = DB.get('ag_km');
 let mantenimientos = DB.get('ag_mant');
 let ingresos = DB.get('ag_ingresos');
+let vencimientos = DB.get('ag_vencimientos');
 
 function save() {
   DB.set('ag_gastos', gastos);
@@ -973,6 +1215,7 @@ function save() {
   DB.set('ag_km', kmRegistros);
   DB.set('ag_mant', mantenimientos);
   DB.set('ag_ingresos', ingresos);
+  DB.set('ag_vencimientos', vencimientos);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1006,7 +1249,7 @@ function showAlert(id, msg, type='success', dur=4000) {
 //  NAVIGATION
 // ══════════════════════════════════════════════════════════════════
 function showSection(id) {
-  ['gastos','reportes','km','mant','ingresos','utilidades'].forEach(s => {
+  ['gastos','reportes','km','mant','ingresos','utilidades','vencimientos'].forEach(s => {
     const sec = document.getElementById('sec-'+s);
     const nav = document.getElementById('nav-'+s);
     if(sec) sec.classList.toggle('visible', s===id);
@@ -1019,6 +1262,7 @@ function showSection(id) {
   if(id==='mant') { renderMant(); }
   if(id==='ingresos') { renderHistIngresos(); }
   if(id==='utilidades') { renderUtilidades(); }
+  if(id==='vencimientos') { renderVencimientos(); }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1064,7 +1308,7 @@ function renderVehiculos() {
 }
 
 function renderSelectVehiculos() {
-  const selects = ['g-vehiculo','km-vehiculo','km-hist-vehiculo','mant-vehiculo','r-vehiculo','ing-vehiculo','util-vehiculo'];
+  const selects = ['g-vehiculo','km-vehiculo','km-hist-vehiculo','mant-vehiculo','r-vehiculo','ing-vehiculo','util-vehiculo','venc-vehiculo'];
   selects.forEach(id => {
     const sel = document.getElementById(id);
     if(!sel) return;
@@ -1449,6 +1693,7 @@ document.getElementById('modal-delete').addEventListener('click', e => { if(e.ta
   renderSelectVehiculos();
   renderUltimosGastos();
   renderHistIngresos();
+  renderVencimientos();
   // Default utilidades to current month
   const utilDesde = document.getElementById('util-desde');
   const utilHasta = document.getElementById('util-hasta');
@@ -1695,6 +1940,204 @@ function renderUtilidades() {
     : '<tr><td colspan="4" style="text-align:center;color:var(--text3)">Sin gastos en el período</td></tr>';
 }
 
+// ══════════════════════════════════════════════════
+// VENCIMIENTOS
+// ══════════════════════════════════════════════════
+
+const VENC_SUBCATS = {
+  D: [['D1','Seguro Auto'],['D2','Seguro Moto'],['D3','Seguro Camión'],['D4','Otros Seguros']],
+  E: [['E1','Patente Auto'],['E2','Patente Moto'],['E3','Patente Camión'],['E4','Otras Patentes']],
+  F: [['F1','Multas'],['F2','Peajes'],['F3','Estacionamiento'],['F4','Lavado'],['F5','Otros']]
+};
+const CAT_NAMES = { A:'Combustible', B:'Servicios', C:'Repuestos', D:'Seguros', E:'Patentes', F:'Otros Gastos' };
+
+function actualizarSubcatVenc() {
+  const cat = document.getElementById('venc-categoria').value;
+  const wrap = document.getElementById('venc-subcat-wrap');
+  const sel  = document.getElementById('venc-subcategoria');
+  const opts = VENC_SUBCATS[cat] || [];
+  if (opts.length) {
+    sel.innerHTML = '<option value="">— Seleccionar —</option>' + opts.map(([v,t]) => `<option value="${v}">${t}</option>`).join('');
+    wrap.style.display = 'flex';
+  } else {
+    wrap.style.display = 'none';
+    sel.value = '';
+  }
+}
+
+function contarVencComent() {
+  const v = document.getElementById('venc-comentarios').value.length;
+  const el = document.getElementById('venc-coment-count');
+  el.textContent = v + ' / 140';
+  el.className = 'char-count' + (v > 120 ? ' warn' : '');
+}
+
+function guardarVencimiento() {
+  const vehiculo    = document.getElementById('venc-vehiculo').value;
+  const fecha       = document.getElementById('venc-fecha').value;
+  const importe     = parseFloat(document.getElementById('venc-importe').value);
+  const categoria   = document.getElementById('venc-categoria').value;
+  const subcategoria= document.getElementById('venc-subcategoria') ? document.getElementById('venc-subcategoria').value : '';
+  const comercio    = document.getElementById('venc-comercio').value.trim();
+  const comentarios = document.getElementById('venc-comentarios').value.trim();
+
+  if (!vehiculo)              return showAlert('venc-alert','Seleccioná un vehículo.','error');
+  if (!fecha)                 return showAlert('venc-alert','Ingresá la fecha de vencimiento.','error');
+  if (!importe || importe<=0) return showAlert('venc-alert','Ingresá un importe válido.','error');
+  if (!categoria)             return showAlert('venc-alert','Seleccioná una categoría.','error');
+
+  vencimientos.push({
+    id: Date.now(),
+    vehiculo, fecha, importe, categoria, subcategoria, comercio, comentarios,
+    pagado: false
+  });
+  save();
+  renderVencimientos();
+  limpiarVencimiento();
+  showAlert('venc-alert','✅ Vencimiento guardado correctamente.');
+}
+
+function limpiarVencimiento() {
+  ['venc-vehiculo','venc-categoria','venc-subcategoria','venc-comercio','venc-comentarios'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('venc-importe').value = '';
+  const f = document.getElementById('venc-fecha');
+  if(f) f.value = '';
+  document.getElementById('venc-subcat-wrap').style.display = 'none';
+  contarVencComent();
+}
+
+function renderVencimientos() {
+  const tbody = document.getElementById('body-vencimientos');
+  if (!tbody) return;
+
+  const hoy = new Date().toISOString().split('T')[0];
+  const lista = [...vencimientos].sort((a,b) => a.fecha.localeCompare(b.fecha));
+
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3)">Sin vencimientos registrados</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = lista.map(v => {
+    const dias = Math.ceil((new Date(v.fecha) - new Date(hoy)) / 86400000);
+    let estadoBadge, estadoColor;
+    if (dias < 0) {
+      estadoBadge = '⚠️ Vencido';
+      estadoColor = 'background:#fdecea;color:#cc1a1a;font-weight:700;';
+    } else if (dias === 0) {
+      estadoBadge = '🔴 Hoy';
+      estadoColor = 'background:#fdecea;color:#cc1a1a;font-weight:700;';
+    } else if (dias <= 7) {
+      estadoBadge = `🟡 En ${dias}d`;
+      estadoColor = 'background:#fff8e1;color:#8B6000;font-weight:700;';
+    } else {
+      estadoBadge = `🟢 En ${dias}d`;
+      estadoColor = 'background:#e8f7ee;color:#1a7a3a;font-weight:600;';
+    }
+    const catNom = CAT_NAMES[v.categoria] || v.categoria;
+    const subNom = v.subcategoria ? ` / ${v.subcategoria}` : '';
+    return `<tr>
+      <td>${v.fecha.split('-').reverse().join('/')}</td>
+      <td>${v.vehiculo||'—'}</td>
+      <td>${catNom}${subNom}</td>
+      <td>${v.comercio||'—'}</td>
+      <td style="text-align:right;font-weight:600">${fmt(v.importe)}</td>
+      <td><span style="padding:3px 10px;border-radius:10px;font-size:12px;${estadoColor}">${estadoBadge}</span></td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;margin:2px" onclick="abrirModalPagar(${v.id})">💳 Pagar</button>
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;margin:2px" onclick="abrirModalModificarVenc(${v.id})">✏️ Modificar</button>
+        <button class="btn-icon" style="font-size:14px;margin:2px" onclick="borrarVencimiento(${v.id})" title="Borrar">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PAGAR ──
+function abrirModalPagar(id) {
+  const v = vencimientos.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('pagar-venc-id').value = id;
+  document.getElementById('pagar-fecha').value   = new Date().toISOString().split('T')[0];
+  document.getElementById('pagar-importe').value = v.importe;
+  document.getElementById('modal-pagar').style.display = 'flex';
+}
+
+function cerrarModalPagar(e) {
+  if (!e || e.target === document.getElementById('modal-pagar'))
+    document.getElementById('modal-pagar').style.display = 'none';
+}
+
+function confirmarPago() {
+  const id      = parseInt(document.getElementById('pagar-venc-id').value);
+  const fecha   = document.getElementById('pagar-fecha').value;
+  const importe = parseFloat(document.getElementById('pagar-importe').value);
+  const v       = vencimientos.find(x => x.id === id);
+  if (!v) return;
+  if (!fecha)                return alert('Ingresá la fecha de pago.');
+  if (!importe || importe<=0) return alert('Ingresá un importe válido.');
+
+  // Add to gastos
+  gastos.push({
+    id: uid(),
+    vehiculo:     v.vehiculo,
+    fecha,
+    importe,
+    comercio:     v.comercio || '',
+    categoria:    v.categoria,
+    subcategoria: v.subcategoria || '',
+    comentarios:  v.comentarios ? `[Pago vencimiento] ${v.comentarios}` : '[Pago vencimiento]'
+  });
+
+  // Remove from vencimientos
+  vencimientos = vencimientos.filter(x => x.id !== id);
+  save();
+  renderVencimientos();
+  renderUltimosGastos();
+  document.getElementById('modal-pagar').style.display = 'none';
+  showAlert('venc-alert','✅ Pago registrado y agregado al registro de Gastos.');
+}
+
+// ── MODIFICAR ──
+function abrirModalModificarVenc(id) {
+  const v = vencimientos.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('mod-venc-id').value     = id;
+  document.getElementById('mod-venc-fecha').value  = v.fecha;
+  document.getElementById('mod-venc-importe').value= v.importe;
+  document.getElementById('modal-modificar-venc').style.display = 'flex';
+}
+
+function cerrarModalModificarVenc(e) {
+  if (!e || e.target === document.getElementById('modal-modificar-venc'))
+    document.getElementById('modal-modificar-venc').style.display = 'none';
+}
+
+function confirmarModificarVenc() {
+  const id      = parseInt(document.getElementById('mod-venc-id').value);
+  const fecha   = document.getElementById('mod-venc-fecha').value;
+  const importe = parseFloat(document.getElementById('mod-venc-importe').value);
+  if (!fecha)                return alert('Ingresá la fecha de vencimiento.');
+  if (!importe || importe<=0) return alert('Ingresá un importe válido.');
+  const idx = vencimientos.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  vencimientos[idx].fecha   = fecha;
+  vencimientos[idx].importe = importe;
+  save();
+  renderVencimientos();
+  document.getElementById('modal-modificar-venc').style.display = 'none';
+  showAlert('venc-alert','✅ Vencimiento modificado correctamente.');
+}
+
+// ── BORRAR ──
+function borrarVencimiento(id) {
+  if (!confirm('¿Eliminar este vencimiento definitivamente?')) return;
+  vencimientos = vencimientos.filter(x => x.id !== id);
+  save();
+  renderVencimientos();
+}
+
 function exportarDatos() {
   const total = gastos.length + kmRegistros.length + mantenimientos.length + vehiculos.length;
   if (total === 0) { alert('No hay datos para exportar.'); return; }
@@ -1706,7 +2149,8 @@ function exportarDatos() {
     vehiculos: vehiculos,
     km: kmRegistros,
     mantenimientos: mantenimientos,
-    ingresos: ingresos
+    ingresos: ingresos,
+    vencimientos: vencimientos
   };
   const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1740,6 +2184,7 @@ function importarDatos(event) {
       const impKm        = imported.km || [];
       const impMant      = imported.mantenimientos || [];
       const impIngresos  = imported.ingresos || [];
+      const impVencimientos = imported.vencimientos || [];
       const fecha        = imported.fecha ? imported.fecha.split('T')[0] : 'desconocida';
 
       // ── Diálogo: importar TODO o por vehículo ──
@@ -1791,6 +2236,7 @@ function importarDatos(event) {
           kmRegistros  = kmRegistros.filter(k => k.vehiculoId !== vidFinal);
           mantenimientos = mantenimientos.filter(m => m.vehiculoId !== vidFinal);
           ingresos     = ingresos.filter(i => i.vehiculoId !== vidFinal);
+          vencimientos = vencimientos.filter(v => v.vehiculo !== vidFinal);
         } else {
           // Agregar vehículo nuevo
           vehiculos.push(vImportar);
@@ -1808,6 +2254,9 @@ function importarDatos(event) {
         });
         impIngresos.filter(i => i.vehiculoId === vidOrig).forEach(i => {
           ingresos.push({ ...i, vehiculoId: vidFinal });
+        });
+        impVencimientos.filter(v => v.vehiculo === vidOrig).forEach(v => {
+          vencimientos.push({ ...v, vehiculo: vidFinal });
         });
 
         save();
@@ -1832,6 +2281,7 @@ function importarDatos(event) {
         kmRegistros    = impKm;
         mantenimientos = impMant;
         ingresos       = impIngresos;
+        vencimientos   = impVencimientos;
         save();
         renderVehiculos();
         renderSelectVehiculos();
