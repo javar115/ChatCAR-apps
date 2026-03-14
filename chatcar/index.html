@@ -1023,20 +1023,14 @@
 </main>
 
 <!-- MODAL PAGAR VENCIMIENTO -->
-<div class="modal-overlay" id="modal-pagar" style="display:none" onclick="if(event.target===this)cerrarModalPagar()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title">💳 Registrar Pago</div>
-    <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos. Al confirmar se agregará al registro de Gastos y se eliminará de Vencimientos.</p>
+<div id="modal-pagar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:500">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(480px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.3)">
+    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:14px;font-family:var(--font-head)">💳 Registrar Pago</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos. Al confirmar se agrega a Gastos y se elimina de Vencimientos.</p>
     <input type="hidden" id="pagar-venc-id">
     <div class="form-grid cols-2" style="margin-bottom:16px">
-      <div class="form-group">
-        <label>Fecha de Pago *</label>
-        <input type="date" id="pagar-fecha">
-      </div>
-      <div class="form-group">
-        <label>Importe Pagado *</label>
-        <input type="number" id="pagar-importe" min="0" step="0.01">
-      </div>
+      <div class="form-group"><label>Fecha de Pago *</label><input type="date" id="pagar-fecha"></div>
+      <div class="form-group"><label>Importe Pagado *</label><input type="number" id="pagar-importe" min="0" step="0.01"></div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
@@ -1046,19 +1040,13 @@
 </div>
 
 <!-- MODAL MODIFICAR VENCIMIENTO -->
-<div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="if(event.target===this)cerrarModalModificarVenc()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-title">✏️ Modificar Vencimiento</div>
+<div id="modal-modificar-venc" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:500">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(480px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+    <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:14px;font-family:var(--font-head)">✏️ Modificar Vencimiento</div>
     <input type="hidden" id="mod-venc-id">
     <div class="form-grid cols-2" style="margin-bottom:16px">
-      <div class="form-group">
-        <label>Nueva Fecha de Vencimiento *</label>
-        <input type="date" id="mod-venc-fecha">
-      </div>
-      <div class="form-group">
-        <label>Nuevo Importe *</label>
-        <input type="number" id="mod-venc-importe" min="0" step="0.01">
-      </div>
+      <div class="form-group"><label>Nueva Fecha de Vencimiento *</label><input type="date" id="mod-venc-fecha"></div>
+      <div class="form-group"><label>Nuevo Importe *</label><input type="number" id="mod-venc-importe" min="0" step="0.01"></div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
@@ -1837,11 +1825,11 @@ function renderUtilidades() {
 // ══════════════════════════════════════════════════
 
 const VENC_SUBCATS = {
-  D: [['D1','Seguro Auto'],['D2','Seguro Moto'],['D3','Seguro Camión'],['D4','Otros Seguros']],
-  E: [['E1','Patente Auto'],['E2','Patente Moto'],['E3','Patente Camión'],['E4','Otras Patentes']],
-  F: [['F1','Multas'],['F2','Peajes'],['F3','Estacionamiento'],['F4','Lavado'],['F5','Otros']]
+  D:[['D1','Seguro Auto'],['D2','Seguro Moto'],['D3','Seguro Camión'],['D4','Otros Seguros']],
+  E:[['E1','Patente Auto'],['E2','Patente Moto'],['E3','Patente Camión'],['E4','Otras Patentes']],
+  F:[['F1','Multas'],['F2','Peajes'],['F3','Estacionamiento'],['F4','Lavado'],['F5','Otros']]
 };
-const CAT_NAMES = { A:'Combustible', B:'Servicios', C:'Repuestos', D:'Seguros', E:'Patentes', F:'Otros Gastos' };
+const VENC_CAT_NAMES = { D:'Seguros', E:'Patentes', F:'Otros Gastos' };
 
 function actualizarSubcatVenc() {
   const cat = document.getElementById('venc-categoria').value;
@@ -1869,20 +1857,16 @@ function guardarVencimiento() {
   const fecha       = document.getElementById('venc-fecha').value;
   const importe     = parseFloat(document.getElementById('venc-importe').value);
   const categoria   = document.getElementById('venc-categoria').value;
-  const subcategoria= document.getElementById('venc-subcategoria') ? document.getElementById('venc-subcategoria').value : '';
+  const subcategoria= document.getElementById('venc-subcategoria').value || '';
   const comercio    = document.getElementById('venc-comercio').value.trim();
   const comentarios = document.getElementById('venc-comentarios').value.trim();
 
-  if (!vehiculo)              return showAlert('venc-alert','Seleccioná un vehículo.','error');
-  if (!fecha)                 return showAlert('venc-alert','Ingresá la fecha de vencimiento.','error');
-  if (!importe || importe<=0) return showAlert('venc-alert','Ingresá un importe válido.','error');
-  if (!categoria)             return showAlert('venc-alert','Seleccioná una categoría.','error');
+  if (!vehiculo)               return showAlert('venc-alert','Seleccioná un vehículo.','error');
+  if (!fecha)                  return showAlert('venc-alert','Ingresá la fecha de vencimiento.','error');
+  if (!importe || importe <= 0) return showAlert('venc-alert','Ingresá un importe válido.','error');
+  if (!categoria)              return showAlert('venc-alert','Seleccioná una categoría.','error');
 
-  vencimientos.push({
-    id: Date.now(),
-    vehiculo, fecha, importe, categoria, subcategoria, comercio, comentarios,
-    pagado: false
-  });
+  vencimientos.push({ id: Date.now(), vehiculo, fecha, importe, categoria, subcategoria, comercio, comentarios });
   save();
   renderVencimientos();
   limpiarVencimiento();
@@ -1891,11 +1875,9 @@ function guardarVencimiento() {
 
 function limpiarVencimiento() {
   ['venc-vehiculo','venc-categoria','venc-subcategoria','venc-comercio','venc-comentarios'].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value = '';
+    const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('venc-importe').value = '';
-  const f = document.getElementById('venc-fecha');
-  if(f) f.value = '';
   document.getElementById('venc-subcat-wrap').style.display = 'none';
   contarVencComent();
 }
@@ -1903,32 +1885,20 @@ function limpiarVencimiento() {
 function renderVencimientos() {
   const tbody = document.getElementById('body-vencimientos');
   if (!tbody) return;
-
   const hoy = new Date().toISOString().split('T')[0];
   const lista = [...vencimientos].sort((a,b) => a.fecha.localeCompare(b.fecha));
-
   if (!lista.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3)">Sin vencimientos registrados</td></tr>';
     return;
   }
-
   tbody.innerHTML = lista.map(v => {
     const dias = Math.ceil((new Date(v.fecha) - new Date(hoy)) / 86400000);
-    let estadoBadge, estadoColor;
-    if (dias < 0) {
-      estadoBadge = '⚠️ Vencido';
-      estadoColor = 'background:#fdecea;color:#cc1a1a;font-weight:700;';
-    } else if (dias === 0) {
-      estadoBadge = '🔴 Hoy';
-      estadoColor = 'background:#fdecea;color:#cc1a1a;font-weight:700;';
-    } else if (dias <= 7) {
-      estadoBadge = `🟡 En ${dias}d`;
-      estadoColor = 'background:#fff8e1;color:#8B6000;font-weight:700;';
-    } else {
-      estadoBadge = `🟢 En ${dias}d`;
-      estadoColor = 'background:#e8f7ee;color:#1a7a3a;font-weight:600;';
-    }
-    const catNom = CAT_NAMES[v.categoria] || v.categoria;
+    let estado, eColor;
+    if      (dias < 0)  { estado = '⚠️ Vencido';      eColor = 'background:#fdecea;color:#cc1a1a;font-weight:700'; }
+    else if (dias === 0){ estado = '🔴 Hoy';           eColor = 'background:#fdecea;color:#cc1a1a;font-weight:700'; }
+    else if (dias <= 7) { estado = `🟡 En ${dias}d`;   eColor = 'background:#fff8e1;color:#8B6000;font-weight:700'; }
+    else                { estado = `🟢 En ${dias}d`;   eColor = 'background:#e8f7ee;color:#1a7a3a;font-weight:600'; }
+    const catNom = VENC_CAT_NAMES[v.categoria] || v.categoria || '—';
     const subNom = v.subcategoria ? ` / ${v.subcategoria}` : '';
     return `<tr>
       <td>${v.fecha.split('-').reverse().join('/')}</td>
@@ -1936,41 +1906,38 @@ function renderVencimientos() {
       <td>${catNom}${subNom}</td>
       <td>${v.comercio||'—'}</td>
       <td style="text-align:right;font-weight:600">${fmt(v.importe)}</td>
-      <td><span style="padding:3px 10px;border-radius:10px;font-size:12px;${estadoColor}">${estadoBadge}</span></td>
+      <td><span style="padding:3px 10px;border-radius:10px;font-size:12px;${eColor}">${estado}</span></td>
       <td style="text-align:center;white-space:nowrap">
         <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;margin:2px" onclick="abrirModalPagar(${v.id})">💳 Pagar</button>
-        <button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;margin:2px" onclick="abrirModalModificarVenc(${v.id})">✏️ Modificar</button>
-        <button class="btn-icon" style="font-size:14px;margin:2px" onclick="borrarVencimiento(${v.id})" title="Borrar">🗑</button>
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;margin:2px" onclick="abrirModalModificarVenc(${v.id})">✏️ Mod</button>
+        <button class="btn-icon" onclick="borrarVencimiento(${v.id})" title="Borrar">🗑</button>
       </td>
     </tr>`;
   }).join('');
 }
 
-// ── PAGAR ──
 function abrirModalPagar(id) {
   const v = vencimientos.find(x => x.id === id);
   if (!v) return;
-  document.getElementById('pagar-venc-id').value = id;
-  document.getElementById('pagar-fecha').value   = new Date().toISOString().split('T')[0];
-  document.getElementById('pagar-importe').value = v.importe;
+  document.getElementById('pagar-venc-id').value   = id;
+  document.getElementById('pagar-fecha').value     = new Date().toISOString().split('T')[0];
+  document.getElementById('pagar-importe').value   = v.importe;
   document.getElementById('modal-pagar').style.display = 'flex';
 }
 
-function cerrarModalPagar(e) {
-  if (!e || e.target === document.getElementById('modal-pagar'))
-    document.getElementById('modal-pagar').style.display = 'none';
+function cerrarModalPagar() {
+  document.getElementById('modal-pagar').style.display = 'none';
 }
 
 function confirmarPago() {
   const id      = parseInt(document.getElementById('pagar-venc-id').value);
   const fecha   = document.getElementById('pagar-fecha').value;
   const importe = parseFloat(document.getElementById('pagar-importe').value);
-  const v       = vencimientos.find(x => x.id === id);
+  const v = vencimientos.find(x => x.id === id);
   if (!v) return;
   if (!fecha)                return alert('Ingresá la fecha de pago.');
   if (!importe || importe<=0) return alert('Ingresá un importe válido.');
 
-  // Add to gastos
   gastos.push({
     id: uid(),
     vehiculo:     v.vehiculo,
@@ -1979,31 +1946,27 @@ function confirmarPago() {
     comercio:     v.comercio || '',
     categoria:    v.categoria,
     subcategoria: v.subcategoria || '',
-    comentarios:  v.comentarios ? `[Pago vencimiento] ${v.comentarios}` : '[Pago vencimiento]'
+    comentarios:  '[Pago vencimiento]' + (v.comentarios ? ': ' + v.comentarios : '')
   });
-
-  // Remove from vencimientos
   vencimientos = vencimientos.filter(x => x.id !== id);
   save();
   renderVencimientos();
   renderUltimosGastos();
-  document.getElementById('modal-pagar').style.display = 'none';
+  cerrarModalPagar();
   showAlert('venc-alert','✅ Pago registrado y agregado al registro de Gastos.');
 }
 
-// ── MODIFICAR ──
 function abrirModalModificarVenc(id) {
   const v = vencimientos.find(x => x.id === id);
   if (!v) return;
-  document.getElementById('mod-venc-id').value     = id;
-  document.getElementById('mod-venc-fecha').value  = v.fecha;
-  document.getElementById('mod-venc-importe').value= v.importe;
+  document.getElementById('mod-venc-id').value      = id;
+  document.getElementById('mod-venc-fecha').value   = v.fecha;
+  document.getElementById('mod-venc-importe').value = v.importe;
   document.getElementById('modal-modificar-venc').style.display = 'flex';
 }
 
-function cerrarModalModificarVenc(e) {
-  if (!e || e.target === document.getElementById('modal-modificar-venc'))
-    document.getElementById('modal-modificar-venc').style.display = 'none';
+function cerrarModalModificarVenc() {
+  document.getElementById('modal-modificar-venc').style.display = 'none';
 }
 
 function confirmarModificarVenc() {
@@ -2018,17 +1981,17 @@ function confirmarModificarVenc() {
   vencimientos[idx].importe = importe;
   save();
   renderVencimientos();
-  document.getElementById('modal-modificar-venc').style.display = 'none';
+  cerrarModalModificarVenc();
   showAlert('venc-alert','✅ Vencimiento modificado correctamente.');
 }
 
-// ── BORRAR ──
 function borrarVencimiento(id) {
   if (!confirm('¿Eliminar este vencimiento definitivamente?')) return;
   vencimientos = vencimientos.filter(x => x.id !== id);
   save();
   renderVencimientos();
 }
+
 
 function exportarDatos() {
   const total = gastos.length + kmRegistros.length + mantenimientos.length + vehiculos.length;
