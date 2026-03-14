@@ -1581,12 +1581,16 @@ document.getElementById('modal-delete').addEventListener('click', e => { if(e.ta
   renderSelectVehiculos();
   renderUltimosGastos();
   renderHistIngresos();
-  renderVencimientos();
   // Default utilidades to current month
   const utilDesde = document.getElementById('util-desde');
   const utilHasta = document.getElementById('util-hasta');
   if (utilDesde) utilDesde.value = `${y}-${m}-01`;
   if (utilHasta) utilHasta.value = hoyStr;
+})();
+
+// Render vencimientos after all functions are defined
+(function() {
+  try { renderVencimientos(); } catch(e) { console.warn('renderVencimientos init:', e); }
 })();
 
 
