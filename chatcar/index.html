@@ -430,6 +430,16 @@
 
   .btn-icon { background:none; border:none; cursor:pointer; font-size:16px; padding:4px; opacity:0.6; transition: opacity 0.15s; }
   .btn-icon:hover { opacity:1; }
+    /* ── Vencimientos modals (display toggle) ── */
+  .modal-overlay[style*="flex"] {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+  }
+
     @media (max-width: 700px) {
     .form-grid, .form-grid.cols-3 { grid-template-columns: 1fr; }
     .nav-btn { padding: 7px 10px; font-size: 12px; }
@@ -945,7 +955,6 @@
 
     <div id="venc-alert" class="hidden"></div>
 
-    <!-- Formulario nuevo vencimiento -->
     <div class="card">
       <div class="card-title">📋 Nuevo Vencimiento</div>
       <div class="form-grid cols-3">
@@ -990,11 +999,10 @@
       </div>
     </div>
 
-    <!-- Lista de vencimientos -->
     <div class="card">
       <div class="card-title">📋 Vencimientos Registrados</div>
       <div class="table-wrap">
-        <table id="tabla-vencimientos">
+        <table>
           <thead>
             <tr>
               <th>Vencimiento</th>
@@ -1011,173 +1019,53 @@
       </div>
     </div>
   </section>
-
-  <!-- MODAL PAGAR VENCIMIENTO -->
-  <div class="modal-overlay" id="modal-pagar" style="display:none" onclick="cerrarModalPagar(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title">💳 Registrar Pago</div>
-      <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos del pago. Al confirmar se agregará automáticamente al registro de Gastos.</p>
-      <input type="hidden" id="pagar-venc-id">
-      <div class="form-grid cols-2" style="margin-bottom:16px">
-        <div class="form-group">
-          <label>Fecha de Pago *</label>
-          <input type="date" id="pagar-fecha">
-        </div>
-        <div class="form-group">
-          <label>Importe Pagado *</label>
-          <input type="number" id="pagar-importe" min="0" step="0.01">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL MODIFICAR VENCIMIENTO -->
-  <div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="cerrarModalModificarVenc(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title">✏️ Modificar Vencimiento</div>
-      <input type="hidden" id="mod-venc-id">
-      <div class="form-grid cols-2" style="margin-bottom:16px">
-        <div class="form-group">
-          <label>Fecha de Vencimiento *</label>
-          <input type="date" id="mod-venc-fecha">
-        </div>
-        <div class="form-group">
-          <label>Importe *</label>
-          <input type="number" id="mod-venc-importe" min="0" step="0.01">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarModificarVenc()">💾 Guardar Cambios</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-  <!-- ════════════════════════ 7. VENCIMIENTOS ════════════════════════ -->
-  <section id="sec-vencimientos" class="section">
-    <div class="page-title">📅 <span>Vencimientos</span></div>
-    <p class="page-desc">Registrá gastos con fecha de vencimiento: seguros, patentes y otros. Pagalos con un clic y se agregan automáticamente al registro de gastos.</p>
-
-    <div id="venc-alert" class="hidden"></div>
-
-    <!-- Formulario nuevo vencimiento -->
-    <div class="card">
-      <div class="card-title">📋 Nuevo Vencimiento</div>
-      <div class="form-grid cols-3">
-        <div class="form-group">
-          <label>Vehículo *</label>
-          <select id="venc-vehiculo"></select>
-        </div>
-        <div class="form-group">
-          <label>Fecha de Vencimiento *</label>
-          <input type="date" id="venc-fecha">
-        </div>
-        <div class="form-group">
-          <label>Importe *</label>
-          <input type="number" id="venc-importe" placeholder="0.00" min="0" step="0.01">
-        </div>
-        <div class="form-group">
-          <label>Categoría *</label>
-          <select id="venc-categoria" onchange="actualizarSubcatVenc()">
-            <option value="">— Seleccionar —</option>
-            <option value="D">D) Seguros</option>
-            <option value="E">E) Patentes</option>
-            <option value="F">F) Otros gastos</option>
-          </select>
-        </div>
-        <div class="form-group" id="venc-subcat-wrap" style="display:none">
-          <label>Subcategoría</label>
-          <select id="venc-subcategoria"></select>
-        </div>
-        <div class="form-group">
-          <label>Comercio / Proveedor</label>
-          <input type="text" id="venc-comercio" placeholder="Ej: La Caja Seguros">
-        </div>
-        <div class="form-group" style="grid-column:span 2">
-          <label>Comentarios <span style="font-weight:400;color:var(--text3)">(opcional, máx. 140 car.)</span></label>
-          <input type="text" id="venc-comentarios" maxlength="140" placeholder="Notas..." oninput="contarVencComent()">
-          <div id="venc-coment-count" class="char-count">0 / 140</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:12px;">
-        <button class="btn btn-primary" onclick="guardarVencimiento()">💾 Guardar Vencimiento</button>
-        <button class="btn btn-secondary" onclick="limpiarVencimiento()">🗑 Limpiar</button>
-      </div>
-    </div>
-
-    <!-- Lista de vencimientos -->
-    <div class="card">
-      <div class="card-title">📋 Vencimientos Registrados</div>
-      <div class="table-wrap">
-        <table id="tabla-vencimientos">
-          <thead>
-            <tr>
-              <th>Vencimiento</th>
-              <th>Vehículo</th>
-              <th>Categoría</th>
-              <th>Comercio</th>
-              <th style="text-align:right">Importe</th>
-              <th>Estado</th>
-              <th style="text-align:center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="body-vencimientos"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODAL PAGAR VENCIMIENTO -->
-  <div class="modal-overlay" id="modal-pagar" style="display:none" onclick="cerrarModalPagar(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title">💳 Registrar Pago</div>
-      <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos del pago. Al confirmar se agregará automáticamente al registro de Gastos.</p>
-      <input type="hidden" id="pagar-venc-id">
-      <div class="form-grid cols-2" style="margin-bottom:16px">
-        <div class="form-group">
-          <label>Fecha de Pago *</label>
-          <input type="date" id="pagar-fecha">
-        </div>
-        <div class="form-group">
-          <label>Importe Pagado *</label>
-          <input type="number" id="pagar-importe" min="0" step="0.01">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL MODIFICAR VENCIMIENTO -->
-  <div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="cerrarModalModificarVenc(event)">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title">✏️ Modificar Vencimiento</div>
-      <input type="hidden" id="mod-venc-id">
-      <div class="form-grid cols-2" style="margin-bottom:16px">
-        <div class="form-group">
-          <label>Fecha de Vencimiento *</label>
-          <input type="date" id="mod-venc-fecha">
-        </div>
-        <div class="form-group">
-          <label>Importe *</label>
-          <input type="number" id="mod-venc-importe" min="0" step="0.01">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
-        <button class="btn btn-primary" onclick="confirmarModificarVenc()">💾 Guardar Cambios</button>
-      </div>
-    </div>
-  </div>
 
 </main>
+
+<!-- MODAL PAGAR VENCIMIENTO -->
+<div class="modal-overlay" id="modal-pagar" style="display:none" onclick="if(event.target===this)cerrarModalPagar()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">💳 Registrar Pago</div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:16px">Confirmá o ajustá los datos. Al confirmar se agregará al registro de Gastos y se eliminará de Vencimientos.</p>
+    <input type="hidden" id="pagar-venc-id">
+    <div class="form-grid cols-2" style="margin-bottom:16px">
+      <div class="form-group">
+        <label>Fecha de Pago *</label>
+        <input type="date" id="pagar-fecha">
+      </div>
+      <div class="form-group">
+        <label>Importe Pagado *</label>
+        <input type="number" id="pagar-importe" min="0" step="0.01">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="cerrarModalPagar()">✖ Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarPago()">✅ Confirmar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODIFICAR VENCIMIENTO -->
+<div class="modal-overlay" id="modal-modificar-venc" style="display:none" onclick="if(event.target===this)cerrarModalModificarVenc()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">✏️ Modificar Vencimiento</div>
+    <input type="hidden" id="mod-venc-id">
+    <div class="form-grid cols-2" style="margin-bottom:16px">
+      <div class="form-group">
+        <label>Nueva Fecha de Vencimiento *</label>
+        <input type="date" id="mod-venc-fecha">
+      </div>
+      <div class="form-group">
+        <label>Nuevo Importe *</label>
+        <input type="number" id="mod-venc-importe" min="0" step="0.01">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="cerrarModalModificarVenc()">✖ Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarModificarVenc()">💾 Guardar Cambios</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL CONFIRMACIÓN DELETE -->
 <div class="modal-overlay" id="modal-delete">
