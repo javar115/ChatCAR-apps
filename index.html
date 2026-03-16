@@ -1120,4 +1120,101 @@
                 this.state.filtroDato = cleanCoincidencia;
                 this.state.coincidencias = [];
                 this.render();
-      
+            }
+
+            resetFiltro() {
+                this.state.filtroTipo = null;
+                this.state.filtroDato = '';
+                this.state.coincidencias = [];
+                this.render();
+            }
+
+            actualizarEditTabla(campo, valor) {
+                this.state.editTabla[campo] = parseFloat(valor) || 0;
+            }
+
+            guardarTabla() {
+                this.state.tabla = {
+                    tarifa1: this.state.editTabla.tarifa1,
+                    tarifa2: this.state.editTabla.tarifa2,
+                    tarifa3: this.state.editTabla.tarifa3,
+                    tarifaEspera: this.state.editTabla.tarifaEspera,
+                    fechaActualizacion: new Date().toLocaleDateString('es-ES')
+                };
+                this.saveTabla();
+                this.state.mode = 'menu';
+                this.render();
+            }
+
+            cancelarTabla() {
+                this.state.mode = 'menu';
+                this.render();
+            }
+
+            eliminarViaje(id) {
+                if (confirm('¿Seguro que quieres eliminar este viaje?')) {
+                    this.state.viajes = this.state.viajes.filter(v => v.id !== id);
+                    this.saveViajes();
+                    this.render();
+                }
+            }
+
+            editarViaje(id) {
+                const viaje = this.state.viajes.find(v => v.id === id);
+                if (!viaje) return;
+
+                const nuevoPasajero = prompt('Pasajero:', viaje.pasajero);
+                if (nuevoPasajero === null) return;
+
+                const nuevoInicio = prompt('Inicio:', viaje.inicio);
+                if (nuevoInicio === null) return;
+
+                const nuevoDestino = prompt('Destino:', viaje.destino);
+                if (nuevoDestino === null) return;
+
+                const nuevoDistancia = parseFloat(prompt('Distancia (km):', viaje.distancia));
+                if (isNaN(nuevoDistancia)) return;
+
+                const nuevoTiempoEspera = parseFloat(prompt('Tiempo de espera (minutos):', viaje.tiempoEspera || 0)) || 0;
+
+                // Recalcular precio
+                let precio = 0;
+                const tabla = this.state.tabla;
+
+                if (nuevoDistancia <= 10) {
+                    precio = tabla.tarifa1;
+                } else if (nuevoDistancia <= 20) {
+                    precio = tabla.tarifa1 + (nuevoDistancia - 10) * tabla.tarifa2;
+                } else if (nuevoDistancia <= 100) {
+                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + (nuevoDistancia - 20) * tabla.tarifa3;
+                }
+
+                const precioEspera = nuevoTiempoEspera * tabla.tarifaEspera;
+                precio = precio + precioEspera;
+
+                if (viaje.vuelta) {
+                    precio = precio * 1.5;
+                }
+
+                // Actualizar viaje
+                viaje.pasajero = nuevoPasajero;
+                viaje.inicio = nuevoInicio;
+                viaje.destino = nuevoDestino;
+                viaje.distancia = nuevoDistancia;
+                viaje.tiempoEspera = nuevoTiempoEspera;
+                viaje.precioDistancia = Math.round(precio - precioEspera);
+                viaje.precioEspera = Math.round(precioEspera);
+                viaje.precio = Math.round(precio);
+
+                this.saveViajes();
+                this.render();
+            }
+        }
+
+        // Inicializar aplicación
+        const app = new TravelCalculator();
+        window.app = app;
+        app.render();
+    </script>
+</body>
+</html>
