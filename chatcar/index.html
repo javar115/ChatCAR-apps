@@ -1017,27 +1017,92 @@
 // ══════════════════════════════════════════════════════════════════
 //  DATA LAYER  (localStorage)
 // ══════════════════════════════════════════════════════════════════
-const DB = {
+// ── IndexedDB storage (Safari-safe) with localStorage fallback ──
+const STORE = 'autogestor';
+const DB_NAME = 'ChatCAR';
+const DB_VER  = 1;
+let _idb = null;
+
+function idbOpen() {
+  return new Promise((res, rej) => {
+    if (_idb) return res(_idb);
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      e.target.result.createObjectStore(STORE);
+    };
+    req.onsuccess = e => { _idb = e.target.result; res(_idb); };
+    req.onerror   = e => rej(e);
+  });
+}
+
+function idbGet(key) {
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).get(key);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e);
+  }));
+}
+
+function idbSet(key, val) {
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).put(val, key);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e);
+  }));
+}
+
+// Sync localStorage fallback
+const LST = {
   get(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } },
-  set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
-  getObj(key, def={}) { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
-  setObj(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+  set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
 };
 
-let gastos = DB.get('ag_gastos');
-let vehiculos = DB.get('ag_vehiculos');
-let kmRegistros = DB.get('ag_km');
-let mantenimientos = DB.get('ag_mant');
-let ingresos = DB.get('ag_ingresos');
-let vencimientos = DB.get('ag_vencimientos');
+let gastos        = [];
+let vehiculos     = [];
+let kmRegistros   = [];
+let mantenimientos= [];
+let ingresos      = [];
+let vencimientos  = [];
+
+// Load all data from IndexedDB, fall back to localStorage
+async function loadAllData() {
+  const keys = ['ag_gastos','ag_vehiculos','ag_km','ag_mant','ag_ingresos','ag_vencimientos'];
+  try {
+    const vals = await Promise.all(keys.map(k => idbGet(k)));
+    gastos         = vals[0] || LST.get('ag_gastos');
+    vehiculos      = vals[1] || LST.get('ag_vehiculos');
+    kmRegistros    = vals[2] || LST.get('ag_km');
+    mantenimientos = vals[3] || LST.get('ag_mant');
+    ingresos       = vals[4] || LST.get('ag_ingresos');
+    vencimientos   = vals[5] || LST.get('ag_vencimientos');
+  } catch(e) {
+    // IndexedDB failed, use localStorage only
+    gastos         = LST.get('ag_gastos');
+    vehiculos      = LST.get('ag_vehiculos');
+    kmRegistros    = LST.get('ag_km');
+    mantenimientos = LST.get('ag_mant');
+    ingresos       = LST.get('ag_ingresos');
+    vencimientos   = LST.get('ag_vencimientos');
+  }
+}
 
 function save() {
-  DB.set('ag_gastos', gastos);
-  DB.set('ag_vehiculos', vehiculos);
-  DB.set('ag_km', kmRegistros);
-  DB.set('ag_mant', mantenimientos);
-  DB.set('ag_ingresos', ingresos);
-  DB.set('ag_vencimientos', vencimientos);
+  // Write to localStorage (sync, instant)
+  LST.set('ag_gastos', gastos);
+  LST.set('ag_vehiculos', vehiculos);
+  LST.set('ag_km', kmRegistros);
+  LST.set('ag_mant', mantenimientos);
+  LST.set('ag_ingresos', ingresos);
+  LST.set('ag_vencimientos', vencimientos);
+  // Write to IndexedDB (async, Safari-safe)
+  idbSet('ag_gastos', gastos);
+  idbSet('ag_vehiculos', vehiculos);
+  idbSet('ag_km', kmRegistros);
+  idbSet('ag_mant', mantenimientos);
+  idbSet('ag_ingresos', ingresos);
+  idbSet('ag_vencimientos', vencimientos);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1501,8 +1566,9 @@ document.getElementById('modal-delete').addEventListener('click', e => { if(e.ta
 // ══════════════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════════════
-(function init() {
+(async function init() {
   try {
+  await loadAllData();
   // Default fecha hoy
   const hoy = new Date();
   const y = hoy.getFullYear(), m = String(hoy.getMonth()+1).padStart(2,'0'), d = String(hoy.getDate()).padStart(2,'0');
