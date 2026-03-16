@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Travel Calc">
+    <meta name="apple-itunes-app" content="app-id=0">
+    <meta name="application-name" content="Travel Calc">
+    <meta name="description" content="Calculadora de precios de viajes profesional">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="color-scheme" content="light">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="email=no">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%233b82f6' width='192' height='192'/><text x='50%' y='50%' font-size='120' font-family='Arial' fill='white' text-anchor='middle' dominant-baseline='central'>🚕</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%233b82f6' width='180' height='180' rx='40'/><text x='50%' y='50%' font-size='100' font-family='Arial' fill='white' text-anchor='middle' dominant-baseline='central'>🚕</text></svg>">
+    
+    <title>Travel Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            margin-top: 32px;
+        }
+
+        .emoji {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .stat-value.blue {
+            color: #2563eb;
+        }
+
+        .stat-value.green {
+            color: #16a34a;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        button {
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1f2937;
+            border: 2px solid #d1d5db;
+            font-weight: 600;
+        }
+
+        .btn-secondary:active {
+            background: #f3f4f6;
+        }
+
+        .table-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 48px;
+        }
+
+        .table-title {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-label {
+            color: #6b7280;
+        }
+
+        .table-value {
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .updated-date {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 24px;
+            padding: 8px;
+        }
+
+        .back-btn:active {
+            color: #1f2937;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .modal-subtitle {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            text-align: left;
+            padding: 16px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            color: #1f2937;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .option-btn:active {
+            background: #f3f4f6;
+            border-color: #9333ea;
+        }
+
+        .match-list {
+            background: #f3e8ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .match-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 12px;
+        }
+
+        .match-item {
+            padding: 10px;
+            background: white;
+            border: 2px solid #ddd6fe;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            width: 100%;
+            text-align: left;
+        }
+
+        .match-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .trip-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 16px;
+            border-left: 4px solid #9333ea;
+        }
+
+        .trip-row {
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+        }
+
+        .trip-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+
+        .trip-value {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .trip-price {
+            color: #16a34a;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .trip-footer {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 12px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #16a34a;
+            margin-top: 8px;
+        }
+
+        .confirmation {
+            text-align: center;
+        }
+
+        .confirmation-emoji {
+            font-size: 80px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: bounce 0.6s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .confirmation-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #16a34a;
+            margin-bottom: 16px;
+        }
+
+        .confirmation-details {
+            background: #f0fdf4;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .confirmation-row {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .confirmation-row span:first-child {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .confirmation-row span:last-child {
+            color: #6b7280;
+            margin-left: 8px;
+        }
+
+        .confirmation-price {
+            border-top: 1px solid #dcfce7;
+            padding-top: 12px;
+            margin-top: 12px;
+            font-size: 16px;
+        }
+
+        .confirmation-price span:last-child {
+            color: #16a34a;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        @supports (padding: max(0px)) {
+            body {
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Optimizaciones iOS */
+        html, body {
+            width: 100%;
+            height: 100%;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        input, textarea, button {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* Prevenir zoom en inputs */
+        input {
+            font-size: 16px !important;
+        }
+
+        /* Smooth scroll en iOS */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        input {
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Notch support */
+        @supports (padding: max(0px)) {
+            .container {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+                padding-bottom: max(16px, env(safe-area-inset-bottom));
+            }
+        }
+
+        /* Status bar color */
+        @media (prefers-color-scheme: light) {
+            body {
+                background: #f3f4f6;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Registrar Service Worker (opcional, no crítico)
+        if ('serviceWorker' in navigator) {
+            const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const isHTTPS = location.protocol === 'https:';
+            
+            if (isLocalHost || isHTTPS) {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    // No hacer nada - el app funciona sin Service Worker
+                });
+            }
+        }
+
+        // Aplicación completa
+        class TravelCalculator {
+            constructor() {
+                this.state = {
+                    mode: 'menu',
+                    formData: { pasajero: '', inicio: '', destino: '', distancia: '', tiempoEspera: '' },
+                    viajes: this.loadViajes(),
+                    tabla: this.loadTabla(),
+                    editTabla: this.loadTabla(),
+                    currentStep: 1,
+                    filtroTipo: null,
+                    filtroDato: '',
+                    coincidencias: []
+                };
+            }
+
+            loadViajes() {
+                const saved = localStorage.getItem('viajes');
+                return saved ? JSON.parse(saved) : [];
+            }
+
+            saveViajes() {
+                localStorage.setItem('viajes', JSON.stringify(this.state.viajes));
+            }
+
+            loadTabla() {
+                const saved = localStorage.getItem('tabla');
+                return saved ? JSON.parse(saved) : {
+                    tarifa1: 7500,
+                    tarifa2: 1400,
+                    tarifa3: 1100,
+                    tarifaEspera: 400,
+                    fechaActualizacion: new Date().toLocaleDateString('es-ES')
+                };
+            }
+
+            saveTabla() {
+                localStorage.setItem('tabla', JSON.stringify(this.state.tabla));
+            }
+
+            registrarPaso(valor) {
+                if (this.state.currentStep === 1) {
+                    this.state.formData.pasajero = valor;
+                    this.state.currentStep = 2;
+                } else if (this.state.currentStep === 2) {
+                    this.state.formData.inicio = valor;
+                    this.state.currentStep = 3;
+                } else if (this.state.currentStep === 3) {
+                    this.state.formData.destino = valor;
+                    this.state.currentStep = 4;
+                } else if (this.state.currentStep === 4) {
+                    const distancia = parseFloat(valor);
+                    this.state.formData.distancia = distancia;
+                    this.state.currentStep = 5;
+                } else if (this.state.currentStep === 5) {
+                    const tiempoEspera = parseFloat(valor) || 0;
+                    this.state.formData.tiempoEspera = tiempoEspera;
+                    if (this.state.formData.distancia > 50) {
+                        this.state.currentStep = 6;
+                    } else {
+                        this.calcularYGuardarViaje(this.state.formData.distancia, false);
+                    }
+                }
+                this.render();
+            }
+
+            calcularYGuardarViaje(distancia, tieneVuelta) {
+                let precio = 0;
+                const tabla = this.state.tabla;
+                const tiempoEspera = this.state.formData.tiempoEspera || 0;
+
+                // Calcular precio por distancia
+                if (distancia <= 10) {
+                    precio = tabla.tarifa1;
+                } else if (distancia <= 20) {
+                    precio = tabla.tarifa1 + (distancia - 10) * tabla.tarifa2;
+                } else if (distancia <= 100) {
+                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + (distancia - 20) * tabla.tarifa3;
+                }
+
+                // Agregar costo de tiempo de espera
+                const precioEspera = tiempoEspera * tabla.tarifaEspera;
+                precio = precio + precioEspera;
+
+                // Aplicar descuento de vuelta si aplica
+                if (tieneVuelta) {
+                    precio = precio * 1.5;
+                }
+
+                const nuevoViaje = {
+                    id: Date.now(),
+                    pasajero: this.state.formData.pasajero,
+                    inicio: this.state.formData.inicio,
+                    destino: this.state.formData.destino,
+                    distancia: distancia,
+                    tiempoEspera: tiempoEspera,
+                    precioDistancia: Math.round(precio - precioEspera),
+                    precioEspera: Math.round(precioEspera),
+                    precio: Math.round(precio),
+                    vuelta: tieneVuelta,
+                    fechaRegistro: new Date().toLocaleDateString('es-ES')
+                };
+
+                this.state.viajes.push(nuevoViaje);
+                this.saveViajes();
+                this.state.mode = 'confirmacion';
+                this.render();
+
+                setTimeout(() => {
+                    this.state.mode = 'menu';
+                    this.state.formData = { pasajero: '', inicio: '', destino: '', distancia: '', tiempoEspera: '' };
+                    this.state.currentStep = 1;
+                    this.render();
+                }, 2000);
+            }
+
+            buscarCoincidencias(dato) {
+                this.state.filtroDato = dato;
+                let matches = [];
+
+                if (!dato) {
+                    this.state.coincidencias = [];
+                    this.render();
+                    return;
+                }
+
+                if (this.state.filtroTipo === 'pasajero') {
+                    matches = [...new Set(this.state.viajes
+                        .filter(v => v.pasajero.toLowerCase().includes(dato.toLowerCase()))
+                        .map(v => v.pasajero))];
+                } else if (this.state.filtroTipo === 'inicio') {
+                    matches = [...new Set(this.state.viajes
+                        .filter(v => v.inicio.toLowerCase().includes(dato.toLowerCase()))
+                        .map(v => v.inicio))];
+                } else if (this.state.filtroTipo === 'destino') {
+                    matches = [...new Set(this.state.viajes
+                        .filter(v => v.destino.toLowerCase().includes(dato.toLowerCase()))
+                        .map(v => v.destino))];
+                }
+
+                this.state.coincidencias = matches;
+                this.render();
+            }
+
+            obtenerViajesFiltrados() {
+                if (this.state.filtroTipo === 'pasajero') {
+                    return this.state.viajes.filter(v => v.pasajero === this.state.filtroDato);
+                } else if (this.state.filtroTipo === 'inicio') {
+                    return this.state.viajes.filter(v => v.inicio === this.state.filtroDato);
+                } else if (this.state.filtroTipo === 'destino') {
+                    return this.state.viajes.filter(v => v.destino === this.state.filtroDato);
+                } else if (this.state.filtroTipo === 'todos') {
+                    return this.state.viajes;
+                }
+                return [];
+            }
+
+            render() {
+                const app = document.getElementById('app');
+
+                if (this.state.mode === 'menu') {
+                    this.renderMenu(app);
+                } else if (this.state.mode === 'viaje') {
+                    this.renderViaje(app);
+                } else if (this.state.mode === 'confirmacion') {
+                    this.renderConfirmacion(app);
+                } else if (this.state.mode === 'listar') {
+                    this.renderListar(app);
+                } else if (this.state.mode === 'tabla') {
+                    this.renderTabla(app);
+                }
+            }
+
+            renderMenu(app) {
+                const totalIngresos = this.state.viajes.reduce((sum, v) => sum + v.precio, 0);
+
+                app.innerHTML = `
+                    <div class="container">
+                        <div class="header">
+                            <div class="emoji">🚕</div>
+                            <h1>Travel Calculator</h1>
+                            <p class="subtitle">Gestiona tus viajes y tarifas</p>
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-value blue">${this.state.viajes.length}</div>
+                                <div class="stat-label">Viajes registrados</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value green">$${totalIngresos.toLocaleString()}</div>
+                                <div class="stat-label">Ingresos totales</div>
+                            </div>
+                        </div>
+
+                        <div class="buttons">
+                            <button class="btn-primary" onclick="app.iniciarViaje()">
+                                ➕ Nuevo Viaje
+                            </button>
+                            <button class="btn-secondary" onclick="app.iniciarListado()">
+                                📋 Listar Viajes
+                            </button>
+                            <button class="btn-secondary" onclick="app.abrirTabla()">
+                                ✏️ Actualizar Tabla01
+                            </button>
+                        </div>
+
+                        <div class="table-card">
+                            <div class="table-title">Tabla01 Actual</div>
+                            <div class="table-row">
+                                <span class="table-label">Hasta 10 km</span>
+                                <span class="table-value">$${this.state.tabla.tarifa1.toLocaleString()}</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="table-label">11-20 km</span>
+                                <span class="table-value">$${this.state.tabla.tarifa2.toLocaleString()}/km</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="table-label">21-100 km</span>
+                                <span class="table-value">$${this.state.tabla.tarifa3.toLocaleString()}/km</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="table-label">Tiempo espera</span>
+                                <span class="table-value">$${this.state.tabla.tarifaEspera.toLocaleString()}/min</span>
+                            </div>
+                            <div class="updated-date">Actualizada: ${this.state.tabla.fechaActualizacion}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderViaje(app) {
+                const pasos = [
+                    { label: '¿Pasajero?', placeholder: 'Nombre completo', field: 'pasajero' },
+                    { label: '¿Inicio del viaje?', placeholder: 'Lugar de salida', field: 'inicio' },
+                    { label: '¿Destino?', placeholder: 'Lugar de llegada', field: 'destino' },
+                    { label: '¿Distancia en km?', placeholder: 'Ej: 25', field: 'distancia' },
+                    { label: '¿Tiempo de espera (minutos)?', placeholder: 'Ej: 15', field: 'tiempoEspera' }
+                ];
+
+                if (this.state.currentStep === 6) {
+                    app.innerHTML = `
+                        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 999;">
+                            <div style="background: white; border-radius: 12px; padding: 32px 24px; max-width: 400px; width: 100%; text-align: center;">
+                                <div style="font-size: 60px; margin-bottom: 16px;">🔄</div>
+                                <h2 style="font-size: 24px; font-weight: 700; color: #1f2937; margin-bottom: 8px;">¿Lleva cálculo de vuelta?</h2>
+                                <p class="modal-subtitle">El viaje supera 50 km. ¿Incluir 50% adicional?</p>
+                                <div class="buttons">
+                                    <button class="btn-primary" onclick="app.confirmarVuelta(true)">✅ Sí, agregar 50%</button>
+                                    <button class="btn-secondary" onclick="app.confirmarVuelta(false)">No, cálculo normal</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const paso = pasos[this.state.currentStep - 1];
+                const inputValue = this.state.formData[paso.field];
+                const progress = (this.state.currentStep / 5) * 100;
+
+                app.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 999;">
+                        <div style="background: white; border-radius: 12px; padding: 32px 24px; max-width: 400px; width: 100%;">
+                            <div class="progress-text">
+                                <span>Paso ${this.state.currentStep}/5</span>
+                                <span>${Math.round(progress)}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+
+                            <h2 class="modal-title" style="text-align: center;">${paso.label}</h2>
+
+                            <div class="form-group">
+                                <input 
+                                    type="${['distancia', 'tiempoEspera'].includes(paso.field) ? 'number' : 'text'}" 
+                                    placeholder="${paso.placeholder}"
+                                    id="inputField"
+                                    autofocus
+                                    style="font-size: 18px;"
+                                >
+                            </div>
+
+                            <div class="buttons">
+                                <button class="btn-primary" onclick="app.registrarPasoInput()">
+                                    Continuar ➡️
+                                </button>
+                                ${this.state.currentStep > 1 ? `<button class="btn-secondary" onclick="app.pasoAnterior()">← Atrás</button>` : ''}
+                                <button class="btn-secondary" onclick="app.cancelarViaje()">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const input = document.getElementById('inputField');
+                    if (input) input.focus();
+                }, 100);
+            }
+
+            renderConfirmacion(app) {
+                const viaje = this.state.viajes[this.state.viajes.length - 1];
+                app.innerHTML = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 999;">
+                        <div style="background: white; border-radius: 12px; padding: 32px 24px; max-width: 400px; width: 100%;">
+                            <div class="confirmation">
+                                <div class="confirmation-emoji">✅</div>
+                                <div class="confirmation-title">¡Viaje guardado!</div>
+                                <div class="confirmation-details">
+                                    <div class="confirmation-row">
+                                        <span>Pasajero:</span>
+                                        <span>${viaje.pasajero}</span>
+                                    </div>
+                                    <div class="confirmation-row">
+                                        <span>Ruta:</span>
+                                        <span>${viaje.inicio} → ${viaje.destino}</span>
+                                    </div>
+                                    <div class="confirmation-row">
+                                        <span>Distancia:</span>
+                                        <span>${viaje.distancia} km</span>
+                                    </div>
+                                    ${viaje.tiempoEspera > 0 ? `
+                                    <div class="confirmation-row">
+                                        <span>Tiempo de espera:</span>
+                                        <span>${viaje.tiempoEspera} min</span>
+                                    </div>
+                                    <div class="confirmation-row">
+                                        <span>Precio distancia:</span>
+                                        <span>$${viaje.precioDistancia.toLocaleString()}</span>
+                                    </div>
+                                    <div class="confirmation-row">
+                                        <span>Precio espera:</span>
+                                        <span>$${viaje.precioEspera.toLocaleString()}</span>
+                                    </div>
+                                    ` : ''}
+                                    <div class="confirmation-row confirmation-price">
+                                        <span>Precio total:</span>
+                                        <span>$${viaje.precio.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderListar(app) {
+                if (!this.state.filtroTipo) {
+                    app.innerHTML = `
+                        <div class="container">
+                            <button class="back-btn" onclick="app.volverAlMenu()">← Atrás</button>
+                            <h2 class="modal-title">¿Filtrar por?</h2>
+                            <div class="options-list">
+                                <button class="option-btn" onclick="app.seleccionarFiltro('pasajero')">👤 Pasajero</button>
+                                <button class="option-btn" onclick="app.seleccionarFiltro('inicio')">📍 Inicio</button>
+                                <button class="option-btn" onclick="app.seleccionarFiltro('destino')">🎯 Destino</button>
+                                <button class="option-btn" onclick="app.seleccionarFiltro('todos')">📋 Todos los viajes</button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (this.state.filtroTipo !== 'todos' && !this.state.filtroDato) {
+                    app.innerHTML = `
+                        <div class="container">
+                            <button class="back-btn" onclick="app.resetFiltro()">← Atrás</button>
+                            <h2 class="modal-title">Buscar por ${this.state.filtroTipo}</h2>
+                            <div class="form-group">
+                                <input 
+                                    type="text"
+                                    placeholder="Ingresa ${this.state.filtroTipo}..."
+                                    id="searchField"
+                                    oninput="app.buscarCoincidencias(this.value)"
+                                    autofocus
+                                >
+                            </div>
+
+                            ${this.state.coincidencias.length > 0 ? `
+                                <div class="match-list">
+                                    <div class="match-count">Se encontraron ${this.state.coincidencias.length} coincidencia(s):</div>
+                                    ${this.state.coincidencias.map((c, i) => `
+                                        <button class="match-item" onclick="app.seleccionarCoincidencia('${c.replace(/'/g, "\\'")}')">${i + 1}. ${c}</button>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        const input = document.getElementById('searchField');
+                        if (input) input.focus();
+                    }, 100);
+                    return;
+                }
+
+                const viajesFiltrados = this.obtenerViajesFiltrados();
+
+                app.innerHTML = `
+                    <div class="container">
+                        <button class="back-btn" onclick="app.resetFiltro()">← Atrás</button>
+                        <h2 class="modal-title">
+                            ${this.state.filtroTipo === 'todos' 
+                                ? 'Todos los viajes' 
+                                : `Viajes por ${this.state.filtroTipo}: ${this.state.filtroDato}`}
+                        </h2>
+
+                        ${viajesFiltrados.length === 0 ? `
+                            <div style="text-align: center; padding: 32px; background: white; border-radius: 8px; margin-top: 24px;">
+                                <p style="color: #6b7280;">No se encontraron viajes</p>
+                            </div>
+                        ` : `
+                            <div>
+                                ${viajesFiltrados.map(viaje => `
+                                    <div class="trip-card">
+                                        <div class="trip-row">
+                                            <div class="trip-label">Pasajero</div>
+                                            <div class="trip-value">${viaje.pasajero}</div>
+                                        </div>
+                                        <div class="trip-row">
+                                            <div class="trip-label">Ruta</div>
+                                            <div class="trip-value">${viaje.inicio} → ${viaje.destino}</div>
+                                        </div>
+                                        <div class="trip-row">
+                                            <div class="trip-label">Distancia</div>
+                                            <div class="trip-value">${viaje.distancia} km</div>
+                                        </div>
+                                        ${viaje.tiempoEspera > 0 ? `
+                                        <div class="trip-row">
+                                            <div class="trip-label">Tiempo espera</div>
+                                            <div class="trip-value">${viaje.tiempoEspera} min</div>
+                                        </div>
+                                        ` : ''}
+                                        <div class="trip-row">
+                                            <div class="trip-label">${viaje.vuelta ? 'Precio (con vuelta)' : 'Precio'}</div>
+                                            <div class="trip-price">$${viaje.precio.toLocaleString()}</div>
+                                        </div>
+                                        <div class="trip-footer">Registrado: ${viaje.fechaRegistro}</div>
+                                    </div>
+                                `).join('')}
+                                <div class="summary">
+                                    <div>Total de ${viajesFiltrados.length} viaje(s)</div>
+                                    <div class="summary-value">$${viajesFiltrados.reduce((sum, v) => sum + v.precio, 0).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }
+
+            renderTabla(app) {
+                app.innerHTML = `
+                    <div class="container">
+                        <button class="back-btn" onclick="app.volverAlMenu()">← Atrás</button>
+                        <h2 class="modal-title">Actualizar Tabla01</h2>
+
+                        <div class="form-group">
+                            <label class="form-label">Tarifa 1: Hasta 10 km ($)</label>
+                            <input 
+                                type="number"
+                                id="tarifa1"
+                                value="${this.state.editTabla.tarifa1}"
+                                oninput="app.actualizarEditTabla('tarifa1', this.value)"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Tarifa 2: 11 a 20 km ($ por km)</label>
+                            <input 
+                                type="number"
+                                id="tarifa2"
+                                value="${this.state.editTabla.tarifa2}"
+                                oninput="app.actualizarEditTabla('tarifa2', this.value)"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Tarifa 3: 21 a 100 km ($ por km)</label>
+                            <input 
+                                type="number"
+                                id="tarifa3"
+                                value="${this.state.editTabla.tarifa3}"
+                                oninput="app.actualizarEditTabla('tarifa3', this.value)"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Tarifa de Espera: ($ por minuto)</label>
+                            <input 
+                                type="number"
+                                id="tarifaEspera"
+                                value="${this.state.editTabla.tarifaEspera}"
+                                oninput="app.actualizarEditTabla('tarifaEspera', this.value)"
+                            >
+                        </div>
+
+                        <div style="background: #f3f4f6; border-radius: 8px; padding: 16px; margin-bottom: 24px; font-size: 14px;">
+                            <strong>Última actualización:</strong> ${this.state.tabla.fechaActualizacion}
+                        </div>
+
+                        <div class="buttons">
+                            <button class="btn-primary" onclick="app.guardarTabla()">✅ Guardar Cambios</button>
+                            <button class="btn-secondary" onclick="app.cancelarTabla()">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            iniciarViaje() {
+                this.state.mode = 'viaje';
+                this.state.formData = { pasajero: '', inicio: '', destino: '', distancia: '', tiempoEspera: '' };
+                this.state.currentStep = 1;
+                this.render();
+            }
+
+            iniciarListado() {
+                this.state.mode = 'listar';
+                this.state.filtroTipo = null;
+                this.state.filtroDato = '';
+                this.state.coincidencias = [];
+                this.render();
+            }
+
+            abrirTabla() {
+                this.state.mode = 'tabla';
+                this.state.editTabla = JSON.parse(JSON.stringify(this.state.tabla));
+                this.render();
+            }
+
+            volverAlMenu() {
+                this.state.mode = 'menu';
+                this.render();
+            }
+
+            registrarPasoInput() {
+                const input = document.getElementById('inputField');
+                if (input && input.value) {
+                    this.registrarPaso(input.value);
+                }
+            }
+
+            pasoAnterior() {
+                this.state.currentStep--;
+                this.render();
+            }
+
+            cancelarViaje() {
+                this.state.mode = 'menu';
+                this.state.formData = { pasajero: '', inicio: '', destino: '', distancia: '' };
+                this.state.currentStep = 1;
+                this.render();
+            }
+
+            confirmarVuelta(tieneVuelta) {
+                const distancia = this.state.formData.distancia;
+                this.calcularYGuardarViaje(distancia, tieneVuelta);
+            }
+
+            seleccionarFiltro(tipo) {
+                this.state.filtroTipo = tipo;
+                this.state.filtroDato = '';
+                this.state.coincidencias = [];
+                this.render();
+            }
+
+            seleccionarCoincidencia(coincidencia) {
+                const cleanCoincidencia = coincidencia.replace(/\\'/g, "'");
+                this.state.filtroDato = cleanCoincidencia;
+                this.state.coincidencias = [];
+                this.render();
+            }
+
+            resetFiltro() {
+                this.state.filtroTipo = null;
+                this.state.filtroDato = '';
+                this.state.coincidencias = [];
+                this.render();
+            }
+
+            actualizarEditTabla(campo, valor) {
+                this.state.editTabla[campo] = parseFloat(valor) || 0;
+            }
+
+            guardarTabla() {
+                this.state.tabla = {
+                    tarifa1: this.state.editTabla.tarifa1,
+                    tarifa2: this.state.editTabla.tarifa2,
+                    tarifa3: this.state.editTabla.tarifa3,
+                    tarifaEspera: this.state.editTabla.tarifaEspera,
+                    fechaActualizacion: new Date().toLocaleDateString('es-ES')
+                };
+                this.saveTabla();
+                this.state.mode = 'menu';
+                this.render();
+            }
+
+            cancelarTabla() {
+                this.state.mode = 'menu';
+                this.render();
+            }
+        }
+
+        // Inicializar aplicación
+        const app = new TravelCalculator();
+        window.app = app;
+        app.render();
+    </script>
+</body>
+</html>
