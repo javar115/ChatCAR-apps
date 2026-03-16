@@ -1,0 +1,159 @@
+# 📱 INSTALACIÓN EN IPHONE - TRAVEL CALCULATOR
+
+## 🚀 PASOS PARA INSTALAR EN TU iPhone 11
+
+### Opción 1: Instalación Rápida (RECOMENDADO)
+
+1. **Abre Safari** en tu iPhone
+2. **Descarga el archivo `index.html`** o navega a donde lo tengas guardado
+3. Si lo descargaste, ve a **Archivos → Descargas** y toca `index.html`
+4. Se abrirá en Safari automáticamente
+5. **Presiona el icono de Compartir** (flecha hacia arriba en la parte inferior)
+6. Desplázate hacia abajo y selecciona **"Agregar a pantalla de inicio"**
+7. Dale un nombre (por defecto: "Travel Calc")
+8. **Toca "Agregar"** en la esquina superior derecha
+
+**¡LISTO!** El icono aparecerá en tu pantalla de inicio como una app nativa 🚕
+
+---
+
+### Opción 2: Usar un servidor online (Mejor experiencia)
+
+Si quieres sincronizar entre dispositivos o compartir con otros:
+
+1. **Sube los archivos a un servidor:**
+   - Netlify (gratis): https://netlify.com
+   - Vercel (gratis): https://vercel.com
+   - GitHub Pages (gratis): https://pages.github.com
+
+2. **En Safari del iPhone:**
+   - Abre tu sitio web
+   - Presiona el icono Compartir (⬆️)
+   - Selecciona "Agregar a pantalla de inicio"
+
+---
+
+## 📲 CARACTERÍSTICAS OPTIMIZADAS PARA iOS
+
+✅ **Sin bordes (Fullscreen)** - Usa todo el pantalla incluyendo notch
+✅ **Status bar oscuro** - Se integra perfectamente
+✅ **Sin zoom involuntario** - Inputs de 16px para evitar zoom
+✅ **Offline** - Funciona sin conexión
+✅ **Rápida** - Carga al instante
+✅ **Responsive** - Perfecta en iPhone 11, 12, 13, 14, 15, 16
+
+---
+
+## 🔧 SOLUCIÓN DE PROBLEMAS
+
+### "No veo la opción de Agregar a pantalla de inicio"
+- ✅ Asegúrate de estar en **Safari** (no Chrome, Firefox)
+- ✅ Espera 2 segundos después de que cargue la página
+- ✅ Presiona el icono Compartir (flecha arriba) en la barra inferior
+
+### "La app se abre pero no funciona"
+- ✅ Abre Safari nuevamente
+- ✅ Ve a Configuración → Safari → Borrar historial y datos
+- ✅ Vuelve a agregar a pantalla de inicio
+
+### "He perdido mis datos"
+- ✅ Los datos se guardan localmente en el iPhone
+- ✅ Si borraste la app, los datos se pierden
+- ✅ Haz copias de seguridad tomando screenshots
+
+### "Los botones me llevan a Safari"
+- ✅ Esto es normal la primera vez
+- ✅ Abre la app desde el icono en pantalla de inicio
+- ✅ La próxima vez funcionará como app nativa
+
+---
+
+## 💾 DATOS Y PRIVACIDAD
+
+✅ **100% privado** - Todos tus datos se guardan SOLO en tu iPhone
+✅ **Sin conexión a internet** - La app funciona sin datos
+✅ **Sin anuncios** - Completamente limpia
+✅ **Sin sincronización** - Los datos no se sincronizan entre dispositivos
+
+---
+
+## 🎯 CÓMO USAR LA CALCULADORA
+
+### Nuevo Viaje
+1. Toca "Nuevo Viaje"
+2. Ingresa el nombre del pasajero
+3. Lugar de inicio
+4. Lugar de destino
+5. Distancia en km
+6. Tiempo de espera en minutos (opcional)
+7. Si es más de 50 km, te preguntará si hay vuelta
+
+### Listar Viajes
+1. Toca "Listar Viajes"
+2. Elige filtrar por: Pasajero, Inicio, Destino o Todos
+3. Ingresa lo que buscas (ej: "Juan" o "Santiago")
+4. Se mostrarán los viajes coincidentes
+
+### Actualizar Tabla01
+1. Toca "Actualizar Tabla01"
+2. Modifica las tarifas según necesites
+3. Toca "Guardar Cambios"
+
+---
+
+## 📋 TARIFAS POR DEFECTO
+
+| Concepto | Valor |
+|----------|-------|
+| Hasta 10 km | $7.500 fijo |
+| 11-20 km | $1.400/km |
+| 21-100 km | $1.100/km |
+| Tiempo espera | $400/minuto |
+| Vuelta (>50km) | +50% |
+
+---
+
+## 🔄 ACTUALIZAR LA APP
+
+Si agregaste cambios al código HTML/CSS:
+
+1. Borra el icono de la pantalla de inicio (presiona y mantén)
+2. Toca "Quitar de pantalla de inicio"
+3. Carga el archivo actualizado en Safari
+4. Vuelve a agregar a pantalla de inicio
+
+---
+
+## ⚙️ CONFIGURACIÓN RECOMENDADA
+
+### Safari
+- Configuración → Safari
+- **Bloqueo de pop-ups**: Activado ✅
+- **Privacidad inteligente**: Activado ✅
+- **Borrar al cerrar**: Desactivado ❌ (Para que se guarden tus datos)
+- **Evitar rastreo entre sitios**: Activado ✅
+
+---
+
+## 💡 CONSEJOS ÚTILES
+
+1. **Acceso rápido:** Agrega a pantalla de inicio con Siri
+2. **Compartir datos:** Toma screenshots de los listados
+3. **Respaldo:** Usa notas de Apple para guardar datos importantes
+4. **Actualizaciones:** Descarga la versión más nueva regularmente
+
+---
+
+## 📞 SOPORTE
+
+Si tienes problemas:
+1. Verifica que estés usando Safari
+2. Borra caché: Configuración → Safari → Borrar historial
+3. Reinstala: Quita de pantalla de inicio y vuelve a agregar
+4. Reinicia el iPhone si todo falla
+
+---
+
+**¡Disfruta usando Travel Calculator en tu iPhone! 🚕**
+
+Creado con ❤️ para conductores profesionales.
