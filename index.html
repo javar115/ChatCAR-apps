@@ -358,6 +358,43 @@
             color: #9ca3af;
         }
 
+        .trip-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn-edit, .btn-delete {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn-edit:active {
+            background: #bfdbfe;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-delete:active {
+            background: #fecaca;
+        }
+
         .summary {
             background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
             border-radius: 8px;
@@ -947,6 +984,10 @@
                                             <div class="trip-price">$${viaje.precio.toLocaleString()}</div>
                                         </div>
                                         <div class="trip-footer">Registrado: ${viaje.fechaRegistro}</div>
+                                        <div class="trip-actions">
+                                            <button class="btn-edit" onclick="app.editarViaje(${viaje.id})">✏️ Editar</button>
+                                            <button class="btn-delete" onclick="app.eliminarViaje(${viaje.id})">🗑️ Eliminar</button>
+                                        </div>
                                     </div>
                                 `).join('')}
                                 <div class="summary">
@@ -1079,42 +1120,4 @@
                 this.state.filtroDato = cleanCoincidencia;
                 this.state.coincidencias = [];
                 this.render();
-            }
-
-            resetFiltro() {
-                this.state.filtroTipo = null;
-                this.state.filtroDato = '';
-                this.state.coincidencias = [];
-                this.render();
-            }
-
-            actualizarEditTabla(campo, valor) {
-                this.state.editTabla[campo] = parseFloat(valor) || 0;
-            }
-
-            guardarTabla() {
-                this.state.tabla = {
-                    tarifa1: this.state.editTabla.tarifa1,
-                    tarifa2: this.state.editTabla.tarifa2,
-                    tarifa3: this.state.editTabla.tarifa3,
-                    tarifaEspera: this.state.editTabla.tarifaEspera,
-                    fechaActualizacion: new Date().toLocaleDateString('es-ES')
-                };
-                this.saveTabla();
-                this.state.mode = 'menu';
-                this.render();
-            }
-
-            cancelarTabla() {
-                this.state.mode = 'menu';
-                this.render();
-            }
-        }
-
-        // Inicializar aplicación
-        const app = new TravelCalculator();
-        window.app = app;
-        app.render();
-    </script>
-</body>
-</html>
+      
