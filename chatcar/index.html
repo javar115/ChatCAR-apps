@@ -2374,16 +2374,14 @@ function exportarDatos() {
   URL.revokeObjectURL(url);
 }
 
-function importarDatos(event) {
+async function importarDatos(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const imported = JSON.parse(e.target.result);
-      // Accept old backups (may not have 'app' field) and new ones
       const appValido = !imported.app || imported.app === 'ChatCAR';
-      // Must have at least vehiculos or gastos
       const tieneData = imported.vehiculos || imported.gastos;
       if (!appValido || !tieneData) {
         alert('El archivo no es un backup válido de ChatCAR.');
@@ -2391,114 +2389,128 @@ function importarDatos(event) {
         return;
       }
 
-      const impVehiculos = imported.vehiculos || [];
-      const impGastos    = imported.gastos || [];
-      const impKm        = imported.km || [];
-      const impMant      = imported.mantenimientos || [];
-      const impIngresos  = imported.ingresos || [];
+      const impVehiculos    = imported.vehiculos || [];
+      const impGastos       = imported.gastos || [];
+      const impKm           = imported.km || [];
+      const impMant         = imported.mantenimientos || [];
+      const impIngresos     = imported.ingresos || [];
       const impVencimientos = imported.vencimientos || [];
-      const fecha        = imported.fecha ? imported.fecha.split('T')[0] : 'desconocida';
+      const fecha           = imported.fecha ? imported.fecha.split('T')[0] : 'desconocida';
 
-      // ── Diálogo: importar TODO o por vehículo ──
-      let modo = '';
-      if (impVehiculos.length > 1) {
-        // Armar lista de vehículos del backup para mostrar
-        const lista = impVehiculos.map((v,i) => (i+1) + ') ' + (v.nombre || v.patente || 'Vehículo ' + (i+1))).join('\n');
-        const resp = confirm(
-          '📦 Backup del ' + fecha +
-          '\n\nVehículos en el backup:\n' + lista +
-          '\n\n¿Querés importar UN vehículo específico?\n\n' +
-          'OK = Elegir vehículo\nCancelar = Importar TODO (reemplaza todo)'
-        );
-        modo = resp ? 'vehiculo' : 'todo';
-      } else {
-        modo = 'todo';
+      if (!confirm(
+        '📦 Backup del ' + fecha + '\n\n' +
+        'Vehículos: ' + impVehiculos.length + '\n' +
+        'Gastos: ' + impGastos.length + '\n' +
+        'Km: ' + impKm.length + '\n' +
+        'Mantenimientos: ' + impMant.length + '\n\n' +
+        'Se subirán todos los datos a Supabase.\n¿Confirmás?'
+      )) { event.target.value = ''; return; }
+
+      // Show progress
+      alert('Importando... esto puede tardar unos segundos.');
+
+      const uid = currentUser.id;
+
+      // 1. Create vehicles and get their new IDs
+      const vehMap = {}; // old name -> new supabase id
+      for (const v of impVehiculos) {
+        const nombre = v.nombre || v;
+        try {
+          // Check if already exists
+          const existing = await sbFetch('vehiculos','GET',null,
+            `?nombre=eq.${encodeURIComponent(nombre)}&usuario_id=eq.${uid}`);
+          if (existing && existing.length > 0) {
+            vehMap[nombre] = existing[0].id;
+          } else {
+            const res = await sbFetch('vehiculos','POST',
+              { nombre, usuario_id: uid },
+              '?select=id');
+            // Re-fetch to get the ID
+            const newV = await sbFetch('vehiculos','GET',null,
+              `?nombre=eq.${encodeURIComponent(nombre)}&usuario_id=eq.${uid}&select=id`);
+            vehMap[nombre] = newV && newV.length > 0 ? newV[0].id : null;
+          }
+        } catch(e) { console.error('Error vehicle:', nombre, e); }
       }
 
-      if (modo === 'vehiculo') {
-        // Pedir número de vehículo
-        const lista = impVehiculos.map((v,i) => (i+1) + ') ' + (v.nombre || v.patente || 'Vehículo ' + (i+1))).join('\n');
-        const eleccion = prompt(
-          'Escribí el NÚMERO del vehículo a importar:\n\n' + lista
-        );
-        const idx = parseInt(eleccion) - 1;
-        if (isNaN(idx) || idx < 0 || idx >= impVehiculos.length) {
-          alert('Número inválido. Importación cancelada.');
-          event.target.value = '';
-          return;
-        }
-
-        const vImportar = impVehiculos[idx];
-        const vidOrig   = vImportar.id;
-
-        // Verificar si ese vehículo ya existe en la app (por patente o nombre)
-        const yaExiste = vehiculos.find(v =>
-          (vImportar.patente && v.patente === vImportar.patente) ||
-          (vImportar.nombre  && v.nombre  === vImportar.nombre)
-        );
-
-        let vidFinal = vidOrig;
-        if (yaExiste) {
-          // Actualizar vehículo existente
-          vidFinal = yaExiste.id;
-          const vi = vehiculos.findIndex(v => v.id === yaExiste.id);
-          vehiculos[vi] = { ...vImportar, id: vidFinal };
-          // Borrar datos anteriores de ese vehículo
-          gastos       = gastos.filter(g => g.vehiculoId !== vidFinal);
-          kmRegistros  = kmRegistros.filter(k => k.vehiculoId !== vidFinal);
-          mantenimientos = mantenimientos.filter(m => m.vehiculoId !== vidFinal);
-          ingresos     = ingresos.filter(i => i.vehiculoId !== vidFinal);
-        } else {
-          // Agregar vehículo nuevo
-          vehiculos.push(vImportar);
-        }
-
-        // Importar datos del vehículo elegido (reasignando id si cambió)
-        impGastos.filter(g => g.vehiculoId === vidOrig).forEach(g => {
-          gastos.push({ ...g, vehiculoId: vidFinal });
-        });
-        impKm.filter(k => k.vehiculoId === vidOrig).forEach(k => {
-          kmRegistros.push({ ...k, vehiculoId: vidFinal });
-        });
-        impMant.filter(m => m.vehiculoId === vidOrig).forEach(m => {
-          mantenimientos.push({ ...m, vehiculoId: vidFinal });
-        });
-        impIngresos.filter(i => i.vehiculoId === vidOrig).forEach(i => {
-          ingresos.push({ ...i, vehiculoId: vidFinal });
-        });
-
-        save();
-        renderVehiculos();
-        renderSelectVehiculos();
-        renderUltimosGastos();
-        alert('✅ Vehículo "' + (vImportar.nombre || vImportar.patente) + '" importado correctamente.\n\nLos demás vehículos no fueron modificados.');
-
-      } else {
-        // Importar TODO
-        if (!confirm(
-          '⚠️ Importar TODO el backup del ' + fecha + '\n\n' +
-          'Vehículos: ' + impVehiculos.length + '\n' +
-          'Gastos: ' + impGastos.length + '\n' +
-          'Km: ' + impKm.length + '\n' +
-          'Mantenimientos: ' + impMant.length + '\n\n' +
-          'ATENCIÓN: Reemplazará TODOS tus datos actuales.'
-        )) { event.target.value = ''; return; }
-
-        gastos         = impGastos;
-        vehiculos      = impVehiculos;
-        kmRegistros    = impKm;
-        mantenimientos = impMant;
-        ingresos       = impIngresos;
-        vencimientos   = impVencimientos;
-        save();
-        renderVehiculos();
-        renderSelectVehiculos();
-        renderUltimosGastos();
-        alert('✅ Todos los datos importados correctamente.');
+      // 2. Insert gastos
+      for (const g of impGastos) {
+        const vNombre = g.vehiculo || g.vehiculoId || '';
+        const vId = vehMap[vNombre];
+        if (!vId) continue;
+        try {
+          await sbFetch('gastos','POST', {
+            vehiculo_id: vId, usuario_id: uid,
+            fecha: g.fecha, importe: g.importe,
+            comercio: g.comercio||'', categoria: g.categoria||'',
+            subcategoria: g.subcategoria||'', comentarios: g.comentarios||''
+          });
+        } catch(e) { console.error('Error gasto:', e); }
       }
+
+      // 3. Insert km
+      for (const k of impKm) {
+        const vNombre = k.vehiculoId || k.vehiculo || '';
+        const vId = vehMap[vNombre];
+        if (!vId) continue;
+        try {
+          await sbFetch('km_registros','POST', {
+            vehiculo_id: vId, usuario_id: uid, fecha: k.fecha, km: k.km
+          });
+        } catch(e) { console.error('Error km:', e); }
+      }
+
+      // 4. Insert mantenimientos
+      for (const m of impMant) {
+        const vNombre = m.vehiculo || m.vehiculoId || '';
+        const vId = vehMap[vNombre];
+        if (!vId) continue;
+        try {
+          await sbFetch('mantenimientos','POST', {
+            vehiculo_id: vId, usuario_id: uid, fecha: m.fecha||null,
+            tipo: m.tipo||'', descripcion: m.descripcion||'', completado: m.completado||false
+          });
+        } catch(e) { console.error('Error mant:', e); }
+      }
+
+      // 5. Insert ingresos
+      for (const i of impIngresos) {
+        const vNombre = i.vehiculoId || i.vehiculo || '';
+        const vId = vehMap[vNombre];
+        if (!vId) continue;
+        try {
+          await sbFetch('ingresos','POST', {
+            vehiculo_id: vId, usuario_id: uid, fecha: i.fecha,
+            importe: i.importe, fuente: i.fuente||'', obs: i.obs||''
+          });
+        } catch(e) { console.error('Error ingreso:', e); }
+      }
+
+      // 6. Insert vencimientos
+      for (const v of impVencimientos) {
+        const vNombre = v.vehiculo || v.vehiculoId || '';
+        const vId = vehMap[vNombre];
+        if (!vId) continue;
+        try {
+          await sbFetch('vencimientos','POST', {
+            vehiculo_id: vId, usuario_id: uid, fecha: v.fecha,
+            importe: v.importe, comercio: v.comercio||'',
+            categoria: v.categoria||'', comentarios: v.comentarios||''
+          });
+        } catch(e) { console.error('Error vencimiento:', e); }
+      }
+
+      // Reload all data
+      await loadAllData();
+      renderVehiculos();
+      renderSelectVehiculos();
+      renderUltimosGastos();
+      renderHistIngresos();
+      renderVencimientos();
+      alert('✅ Datos importados y guardados en Supabase correctamente.');
 
     } catch(err) {
-      alert('Error al leer el archivo. Asegurate de que sea un backup válido de ChatCAR.\n\nDetalle: ' + err.message);
+      alert('Error al leer el archivo.\n\nDetalle: ' + err.message);
     }
     event.target.value = '';
   };
