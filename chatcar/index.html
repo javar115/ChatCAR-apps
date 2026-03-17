@@ -482,6 +482,7 @@
     <button class="nav-btn" onclick="showSection('reportes')" id="nav-reportes">📊 Reportes</button>
     <button class="nav-btn" onclick="showSection('utilidades')" id="nav-utilidades">📈 Utilidades</button>
     <button class="nav-btn" onclick="showSection('vencimientos')" id="nav-vencimientos">📅 Vencimientos</button>
+    <button class="nav-btn" onclick="showSection('admin')" id="nav-admin" style="display:none">⚙️ Admin</button>
     <button class="nav-btn" onclick="showSection('km')" id="nav-km">📍 Kilómetros</button>
     <button class="nav-btn" onclick="showSection('mant')" id="nav-mant">🔧 Mantenimiento</button>
   </nav>
@@ -509,6 +510,7 @@
     <button class="ham-btn" onclick="showSection('reportes');closeMenu()" id="hav-reportes">📊 Reportes</button>
     <button class="ham-btn" onclick="showSection('utilidades');closeMenu()" id="hav-utilidades">📈 Utilidades</button>
     <button class="ham-btn" onclick="showSection('vencimientos');closeMenu()" id="hav-vencimientos">📅 Vencimientos</button>
+    <button class="ham-btn" onclick="showSection('admin');closeMenu()" id="hav-admin" style="display:none">⚙️ Admin</button>
     <button class="ham-btn" onclick="showSection('km');closeMenu()" id="hav-km">📍 Kilómetros</button>
     <button class="ham-btn" onclick="showSection('mant');closeMenu()" id="hav-mant">🔧 Mantenimiento</button>
     <div class="ham-divider"></div>
@@ -1039,6 +1041,101 @@
     </div>
   </section>
 
+  <!-- ════════════════════════ ADMIN ════════════════════════ -->
+  <section id="sec-admin" class="section">
+    <div class="page-title">⚙️ Panel de <span>Administración</span></div>
+    <p class="page-desc">Gestioná usuarios, contraseñas y vehículos asignados.</p>
+
+    <div id="admin-alert" class="hidden"></div>
+
+    <!-- Crear usuario -->
+    <div class="card">
+      <div class="card-title">👤 Crear Nuevo Usuario</div>
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>Usuario *</label>
+          <input type="text" id="new-username" placeholder="Ej: juan">
+        </div>
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="text" id="new-password" placeholder="Contraseña">
+        </div>
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" id="new-nombre" placeholder="Ej: Juan García">
+        </div>
+        <div class="form-group">
+          <label>Rol</label>
+          <select id="new-rol">
+            <option value="conductor">Conductor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="crearUsuario()">+ Crear Usuario</button>
+      </div>
+    </div>
+
+    <!-- Lista de usuarios -->
+    <div class="card">
+      <div class="card-title">👥 Usuarios Registrados</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th style="text-align:center">Acciones</th></tr>
+          </thead>
+          <tbody id="body-admin-usuarios"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL EDITAR USUARIO -->
+  <div id="modal-edit-user" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center;z-index:500">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(500px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px;font-family:var(--font-head)">✏️ Editar Usuario</div>
+      <input type="hidden" id="edit-user-id">
+      <div class="form-grid cols-2" style="margin-bottom:12px">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" id="edit-nombre">
+        </div>
+        <div class="form-group">
+          <label>Nueva contraseña</label>
+          <input type="text" id="edit-password" placeholder="Dejar vacío para no cambiar">
+        </div>
+        <div class="form-group">
+          <label>Rol</label>
+          <select id="edit-rol">
+            <option value="conductor">Conductor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="edit-activo">
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+      </div>
+      <!-- Vehículos del usuario -->
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:8px;color:var(--text)">🚗 Vehículos asignados</div>
+        <div id="edit-vehiculos-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="edit-nuevo-vehiculo" placeholder="Nuevo vehículo..." style="flex:1">
+          <button class="btn btn-secondary" onclick="agregarVehiculoUsuario()">+ Agregar</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="cerrarModalEditUser()">✖ Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarEditUser()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 
@@ -1060,6 +1157,9 @@ let kmRegistros   = [];
 let mantenimientos= [];
 let ingresos      = [];
 let vencimientos  = [];
+let adminUsuarios = [];
+let editingUserId = null;
+let editingUserVehiculos = [];
 
 // ── Supabase API helper ──
 async function sbFetch(table, method='GET', body=null, params='') {
@@ -1234,7 +1334,7 @@ function showAlert(id, msg, type='success', dur=4000) {
 //  NAVIGATION
 // ══════════════════════════════════════════════════════════════════
 function showSection(id) {
-  ['gastos','reportes','km','mant','ingresos','utilidades','vencimientos'].forEach(s => {
+  ['gastos','reportes','km','mant','ingresos','utilidades','vencimientos','admin'].forEach(s => {
     const sec = document.getElementById('sec-'+s);
     const nav = document.getElementById('nav-'+s);
     if(sec) sec.classList.toggle('visible', s===id);
@@ -1248,6 +1348,7 @@ function showSection(id) {
   if(id==='ingresos') { renderHistIngresos(); }
   if(id==='utilidades') { renderUtilidades(); }
   if(id==='vencimientos') { renderVencimientos(); }
+  if(id==='admin') { renderAdminPanel(); }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1704,6 +1805,13 @@ async function initApp() {
   renderUltimosGastos();
   renderHistIngresos();
   renderVencimientos();
+  // Show admin buttons if admin
+  if (currentUser.rol === 'admin') {
+    const na = document.getElementById('nav-admin');
+    const ha = document.getElementById('hav-admin');
+    if (na) na.style.display = '';
+    if (ha) ha.style.display = '';
+  }
   showSection('gastos');
 }
 
@@ -2101,6 +2209,146 @@ function eliminarVencimiento(id) {
     renderVencimientos();
   });
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+//  ADMIN PANEL
+// ══════════════════════════════════════════════════════════════════
+
+async function renderAdminPanel() {
+  if (!currentUser || currentUser.rol !== 'admin') return;
+  try {
+    adminUsuarios = await sbFetch('usuarios','GET',null,'?order=username&select=id,username,nombre,rol,activo');
+    const allVehiculos = await sbFetch('vehiculos','GET',null,'?order=nombre&select=id,nombre,usuario_id');
+
+    const tbody = document.getElementById('body-admin-usuarios');
+    tbody.innerHTML = adminUsuarios.map(u => {
+      const uveh = allVehiculos.filter(v => v.usuario_id === u.id);
+      const vlist = uveh.length ? uveh.map(v => v.nombre).join(', ') : '—';
+      return `<tr>
+        <td><strong>${u.username}</strong></td>
+        <td>${u.nombre||'—'}</td>
+        <td>${u.rol}</td>
+        <td><span style="color:${u.activo?'#1a7a3a':'#cc1a1a'}">${u.activo?'✅ Activo':'❌ Inactivo'}</span><br>
+            <small style="color:var(--text3)">${vlist}</small></td>
+        <td style="text-align:center;white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" onclick="abrirEditUser('${u.id}')">✏️ Editar</button>
+          ${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" onclick="eliminarUsuario('${u.id}','${u.username}')">✕ Eliminar</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    showAlert('admin-alert','Error: ' + e.message,'error');
+  }
+}
+
+async function crearUsuario() {
+  const username = document.getElementById('new-username').value.trim().toLowerCase();
+  const password = document.getElementById('new-password').value.trim();
+  const nombre   = document.getElementById('new-nombre').value.trim();
+  const rol      = document.getElementById('new-rol').value;
+  if (!username) return showAlert('admin-alert','Ingresá un nombre de usuario.','error');
+  if (!password) return showAlert('admin-alert','Ingresá una contraseña.','error');
+  try {
+    await sbFetch('usuarios','POST',{ username, password_hash: password, nombre, rol, activo: true });
+    ['new-username','new-password','new-nombre'].forEach(id => document.getElementById(id).value = '');
+    showAlert('admin-alert',`✅ Usuario "${username}" creado correctamente.`,'success');
+    renderAdminPanel();
+  } catch(e) {
+    showAlert('admin-alert','Error: ' + (e.message.includes('unique') ? 'Ese usuario ya existe.' : e.message),'error');
+  }
+}
+
+async function abrirEditUser(id) {
+  let u = adminUsuarios.find(x => x.id === id);
+  if (!u) {
+    // Fallback: fetch directly from Supabase
+    try {
+      const rows = await sbFetch('usuarios','GET',null,`?id=eq.${id}&select=id,username,nombre,rol,activo`);
+      u = rows && rows.length > 0 ? rows[0] : null;
+    } catch(e) {}
+  }
+  if (!u) { showAlert('admin-alert','No se encontró el usuario.','error'); return; }
+  editingUserId = id;
+  document.getElementById('edit-user-id').value = id;
+  document.getElementById('edit-nombre').value  = u.nombre || '';
+  document.getElementById('edit-password').value = '';
+  document.getElementById('edit-rol').value     = u.rol;
+  document.getElementById('edit-activo').value  = String(u.activo);
+
+  // Load vehiculos for this user
+  try {
+    editingUserVehiculos = await sbFetch('vehiculos','GET',null,`?usuario_id=eq.${id}&order=nombre`);
+    renderEditVehiculos();
+  } catch(e) { editingUserVehiculos = []; }
+
+  document.getElementById('modal-edit-user').style.display = 'flex';
+}
+
+function renderEditVehiculos() {
+  const wrap = document.getElementById('edit-vehiculos-list');
+  wrap.innerHTML = editingUserVehiculos.map(v =>
+    `<span style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:13px;display:inline-flex;align-items:center;gap:6px">
+      ${v.nombre}
+      <button onclick="quitarVehiculoUsuario('${v.id}')" style="background:none;border:none;cursor:pointer;color:#cc1a1a;font-size:14px;padding:0">✕</button>
+    </span>`
+  ).join('');
+}
+
+async function agregarVehiculoUsuario() {
+  const nombre = document.getElementById('edit-nuevo-vehiculo').value.trim();
+  if (!nombre) return;
+  try {
+    const res = await sbFetch('vehiculos','POST',{ nombre, usuario_id: editingUserId });
+    document.getElementById('edit-nuevo-vehiculo').value = '';
+    editingUserVehiculos = await sbFetch('vehiculos','GET',null,`?usuario_id=eq.${editingUserId}&order=nombre`);
+    renderEditVehiculos();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function quitarVehiculoUsuario(vid) {
+  if (!confirm('¿Eliminar este vehículo? Se eliminarán también todos sus datos.')) return;
+  try {
+    await sbFetch('vehiculos','DELETE',null,`?id=eq.${vid}`);
+    editingUserVehiculos = editingUserVehiculos.filter(v => v.id !== vid);
+    renderEditVehiculos();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function guardarEditUser() {
+  const id       = document.getElementById('edit-user-id').value;
+  const nombre   = document.getElementById('edit-nombre').value.trim();
+  const password = document.getElementById('edit-password').value.trim();
+  const rol      = document.getElementById('edit-rol').value;
+  const activo   = document.getElementById('edit-activo').value === 'true';
+  const update   = { nombre, rol, activo };
+  if (password) update.password_hash = password;
+  try {
+    await sbFetch('usuarios','PATCH', update, `?id=eq.${id}`);
+    cerrarModalEditUser();
+    showAlert('admin-alert','✅ Usuario actualizado correctamente.','success');
+    renderAdminPanel();
+  } catch(e) {
+    showAlert('admin-alert','Error: ' + e.message,'error');
+  }
+}
+
+function cerrarModalEditUser() {
+  document.getElementById('modal-edit-user').style.display = 'none';
+  editingUserId = null;
+}
+
+async function eliminarUsuario(id, username) {
+  if (!confirm(`¿Eliminar al usuario "${username}" y todos sus datos? Esta acción no se puede deshacer.`)) return;
+  try {
+    await sbFetch('usuarios','DELETE',null,`?id=eq.${id}`);
+    showAlert('admin-alert',`✅ Usuario "${username}" eliminado.`,'success');
+    renderAdminPanel();
+  } catch(e) {
+    showAlert('admin-alert','Error: ' + e.message,'error');
+  }
+}
+
 
 function exportarDatos() {
   const total = gastos.length + kmRegistros.length + mantenimientos.length + vehiculos.length;
