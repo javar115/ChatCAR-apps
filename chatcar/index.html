@@ -718,18 +718,18 @@ if ('serviceWorker' in navigator) {
   <!-- ════════════════════════════ 3. KILÓMETROS ════════════════════════════ -->
   <section id="sec-km" class="section">
     <div class="page-title">📍 <span>Kilómetros</span></div>
-    <p class="page-desc">Registrá el kilometraje actual y programá el próximo cambio de aceite.</p>
+    <p class="page-desc">Registrá el kilometraje y el próximo cambio de aceite.</p>
 
     <div id="km-alert" class="hidden"></div>
 
     <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:20px">
 
-      <!-- Bloque 1: Registro de Kilometraje Actual -->
+      <!-- Registro km -->
       <div class="card">
-        <div class="card-title">📍 Registro de Kilometraje Actual</div>
+        <div class="card-title">📍 Registrar Kilometraje Actual</div>
         <div class="form-group" style="margin-bottom:14px">
           <label>Vehículo *</label>
-          <select id="km-vehiculo">
+          <select id="km-vehiculo" onchange="mostrarUltimoKm()">
             <option value="">— Seleccionar —</option>
           </select>
         </div>
@@ -741,31 +741,33 @@ if ('serviceWorker' in navigator) {
           <label>Fecha *</label>
           <input type="date" id="km-fecha">
         </div>
-        <button class="btn btn-primary" onclick="guardarKm()">💾 Guardar Kilometraje</button>
-        <div id="ultimo-km-box" style="margin-top:16px"></div>
+        <button class="btn btn-primary" onclick="guardarKm()">💾 Guardar</button>
+        <div id="ultimo-km-box" style="margin-top:14px"></div>
       </div>
 
-      <!-- Bloque 2: Próximo Cambio de Aceite -->
+      <!-- Próximo cambio de aceite -->
       <div class="card">
         <div class="card-title">🛢️ Próximo Cambio de Aceite</div>
         <div class="form-group" style="margin-bottom:14px">
           <label>Vehículo *</label>
-          <select id="aceite-vehiculo" onchange="mostrarEstadoAceite()">
+          <select id="aceite-vehiculo">
             <option value="">— Seleccionar —</option>
           </select>
         </div>
         <div class="form-group" style="margin-bottom:14px">
-          <label>Km del próximo cambio de aceite *</label>
+          <label>Km del próximo cambio *</label>
           <input type="number" id="aceite-km" placeholder="Ej: 118300" min="0">
         </div>
         <div class="form-group" style="margin-bottom:18px">
-          <label>Comentarios <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+          <label>Comentario <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
           <input type="text" id="aceite-comentario" placeholder="Ej: Cambiar filtro de combustible" maxlength="140">
         </div>
         <button class="btn btn-primary" onclick="guardarAceite()">💾 Guardar</button>
-        <div id="aceite-status" style="margin-top:16px"></div>
       </div>
     </div>
+
+    <!-- Semáforo permanente -->
+    <div id="aceite-estado-panel"></div>
 
     <!-- Historial de km -->
     <div class="card">
@@ -777,7 +779,7 @@ if ('serviceWorker' in navigator) {
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Vehículo</th><th>Fecha</th><th>Kilómetros</th><th>Diferencia</th><th></th></tr></thead>
+          <thead><tr><th>Fecha</th><th>Vehículo</th><th>Kilómetros</th><th></th></tr></thead>
           <tbody id="body-km"></tbody>
         </table>
       </div>
@@ -1434,7 +1436,7 @@ function showSection(id) {
   });
   if(id==='reportes') { aplicarFiltros(); }
   if(id==='mant') { renderMant(); }
-  if(id==='km') { renderHistKm(); mostrarUltimoKm(); mostrarEstadoAceite(); }
+  if(id==='km') { renderHistKm(); mostrarUltimoKm(); renderAceiteEstadoPanel(); }
   if(id==='ingresos') { renderHistIngresos(); }
   if(id==='utilidades') { renderUtilidades(); }
   if(id==='vencimientos') { renderVencimientos(); }
@@ -1700,8 +1702,9 @@ async function guardarKm() {
   const valor    = parseInt(document.getElementById('km-valor').value);
   const fecha    = document.getElementById('km-fecha').value;
   if (!vehiculo) return showAlert('km-alert','Seleccioná un vehículo.','error');
-  if (!valor || valor < 0) return showAlert('km-alert','Ingresá un kilometraje válido.','error');
+  if (!valor || valor <= 0) return showAlert('km-alert','Ingresá un kilometraje válido.','error');
   if (!fecha)    return showAlert('km-alert','Ingresá la fecha.','error');
+
   const nk = { id: uid(), vehiculoId: vehiculo, vehiculo, valor, km: valor, fecha };
   kmRegistros.push(nk);
   saveKm(nk).catch(e => console.error(e));
@@ -1709,23 +1712,23 @@ async function guardarKm() {
   document.getElementById('km-valor').value = '';
   mostrarUltimoKm();
   renderHistKm();
-  mostrarEstadoAceite();
+  renderAceiteEstadoPanel(); // actualizar semáforo
 }
 
 function getUltimoKm(vehiculo) {
   const regs = kmRegistros
-    .filter(k => (k.vehiculo || k.vehiculoId) === vehiculo)
-    .sort((a,b) => b.fecha.localeCompare(a.fecha));
+    .filter(k => (k.vehiculo||k.vehiculoId) === vehiculo)
+    .sort((a,b) => b.fecha.localeCompare(a.fecha) || (b.valor||b.km) - (a.valor||a.km));
   return regs[0] || null;
 }
 
 function mostrarUltimoKm() {
   const vehiculo = document.getElementById('km-vehiculo').value;
   const box = document.getElementById('ultimo-km-box');
-  if (!vehiculo) { box.innerHTML = ''; return; }
+  if (!vehiculo || !box) return;
   const ult = getUltimoKm(vehiculo);
   if (!ult) { box.innerHTML = '<p style="color:var(--text3);font-size:13px">Sin registros previos.</p>'; return; }
-  box.innerHTML = `<div class="stat-card" style="margin-top:0"><div class="stat-label">Último registro</div>
+  box.innerHTML = `<div class="stat-card" style="margin:0"><div class="stat-label">Último registro</div>
     <div class="stat-value" style="font-size:18px">${fmtKm(ult.valor||ult.km)}</div>
     <div class="stat-sub">${fmtFecha(ult.fecha)}</div></div>`;
 }
@@ -1736,26 +1739,14 @@ function renderHistKm() {
     .filter(k => !filtro || (k.vehiculo||k.vehiculoId) === filtro)
     .sort((a,b) => b.fecha.localeCompare(a.fecha));
   const tbody = document.getElementById('body-km');
-  if (!regs.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Sin registros de kilometraje.</td></tr>'; return; }
-  const byVeh = {};
-  [...regs].reverse().forEach(r => {
-    const v = r.vehiculo||r.vehiculoId;
-    if (!byVeh[v]) byVeh[v] = [];
-    byVeh[v].push(r);
-  });
-  tbody.innerHTML = regs.map(r => {
-    const v = r.vehiculo||r.vehiculoId;
-    const lista = byVeh[v];
-    const idx = lista.findIndex(x => x.id === r.id);
-    const diff = idx > 0 ? (r.valor||r.km) - (lista[idx-1].valor||lista[idx-1].km) : null;
-    return `<tr>
-      <td>🚘 ${v}</td>
-      <td>${fmtFecha(r.fecha)}</td>
-      <td style="font-weight:600">${fmtKm(r.valor||r.km)}</td>
-      <td style="color:var(--text3)">${diff !== null ? '+'+fmtKm(diff) : '—'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="eliminarKm('${r.id}')">✕</button></td>
-    </tr>`;
-  }).join('');
+  if (!tbody) return;
+  if (!regs.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="4">Sin registros de kilometraje.</td></tr>'; return; }
+  tbody.innerHTML = regs.map(r => `<tr>
+    <td>${fmtFecha(r.fecha)}</td>
+    <td>🚘 ${r.vehiculo||r.vehiculoId}</td>
+    <td style="font-weight:600">${fmtKm(r.valor||r.km)}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="eliminarKm('${r.id}')">✕</button></td>
+  </tr>`).join('');
 }
 
 function eliminarKm(id) {
@@ -1764,76 +1755,97 @@ function eliminarKm(id) {
     sbFetch('km_registros','DELETE',null,`?id=eq.${id}`).catch(e=>console.error(e));
     renderHistKm();
     mostrarUltimoKm();
-    mostrarEstadoAceite();
+    renderAceiteEstadoPanel();
   });
 }
 
-// ── ACEITE ──
-let aceiteConfig = {}; // vehiculo -> { km, comentario }
-
+// ── PRÓXIMO CAMBIO DE ACEITE ──
 async function guardarAceite() {
   const vehiculo   = document.getElementById('aceite-vehiculo').value;
   const km         = parseInt(document.getElementById('aceite-km').value);
   const comentario = document.getElementById('aceite-comentario').value.trim();
-  if (!vehiculo) return showAlert('km-alert','Seleccioná un vehículo.','error');
-  if (!km || km <= 0) return showAlert('km-alert','Ingresá los km del próximo cambio.','error');
-  aceiteConfig[vehiculo] = { km, comentario };
-  // Save to Supabase as a special mantenimiento record
-  try {
-    // Delete existing aceite config for this vehicle
-    const existing = mantenimientos.find(m => (m.vehiculo===vehiculo||m.vehiculoId===vehiculo) && m.esAceite);
-    if (existing) {
-      await sbFetch('mantenimientos','DELETE',null,`?id=eq.${existing.id}`);
-      mantenimientos = mantenimientos.filter(m => m.id !== existing.id);
-    }
-    const vId = await getVehiculoId(vehiculo);
-    if (vId) {
-      await sbFetch('mantenimientos','POST',{
-        vehiculo_id: vId, usuario_id: currentUser.id,
-        descripcion: 'ACEITE:' + (comentario||''),
-        km_proximo: km, tipo: 'aceite', completado: false
-      });
-    }
-    // Reload mantenimientos
-    const uid = currentUser.id;
-    const m = await sbFetch('mantenimientos','GET',null,`?usuario_id=eq.${uid}&order=created_at.desc`);
-    const vRows = await sbFetch('vehiculos','GET',null,`?usuario_id=eq.${uid}&order=nombre`);
-    const vMap = {}; vRows.forEach(x => { vMap[x.id] = x.nombre; });
-    mantenimientos = m.map(x => ({
-      id: x.id, vehiculo: vMap[x.vehiculo_id]||x.vehiculo_id,
-      desc: x.descripcion||'', tipo: x.tipo||'mant',
-      kmProximo: Number(x.km_proximo)||0, fechaProxima: x.fecha||'',
-      completado: x.completado||false,
-      esAceite: x.tipo === 'aceite'
-    }));
-  } catch(e) { console.error(e); }
+  if (!vehiculo)       return showAlert('km-alert','Seleccioná un vehículo.','error');
+  if (!km || km <= 0)  return showAlert('km-alert','Ingresá los km del próximo cambio.','error');
+
+  // Delete existing aceite for this vehicle
+  const existing = mantenimientos.find(m => m.vehiculo === vehiculo && m.esAceite);
+  if (existing) {
+    mantenimientos = mantenimientos.filter(m => m.id !== existing.id);
+    sbFetch('mantenimientos','DELETE',null,`?id=eq.${existing.id}`).catch(e=>console.error(e));
+  }
+
+  // Save new aceite config
+  const vId = await getVehiculoId(vehiculo).catch(()=>null);
+  if (vId) {
+    const res = await sbFetch('mantenimientos','POST',{
+      vehiculo_id: vId, usuario_id: currentUser.id,
+      descripcion: comentario || '',
+      km_proximo: km, tipo: 'aceite', completado: false
+    },'?select=id').catch(e=>{ console.error(e); return null; });
+    // Add to local array
+    const newId = res && res[0] ? res[0].id : uid();
+    mantenimientos.push({ id: newId, vehiculo, desc: comentario||'', tipo: 'aceite', kmProximo: km, esAceite: true });
+  }
+
   document.getElementById('aceite-km').value = '';
   document.getElementById('aceite-comentario').value = '';
   showAlert('km-alert','Próximo cambio de aceite guardado.','success');
-  mostrarEstadoAceite();
+  renderAceiteEstadoPanel();
 }
 
-function mostrarEstadoAceite() {
-  const vehiculo = document.getElementById('aceite-vehiculo').value;
-  const box = document.getElementById('aceite-status');
-  if (!vehiculo) { box.innerHTML = ''; return; }
-  const config = mantenimientos.find(m => (m.vehiculo===vehiculo) && m.esAceite);
-  if (!config) { box.innerHTML = '<p style="color:var(--text3);font-size:13px">Sin configuración de aceite para este vehículo.</p>'; return; }
-  const ult = getUltimoKm(vehiculo);
-  const kmActual = ult ? (ult.valor||ult.km) : null;
-  if (kmActual === null) { box.innerHTML = '<p style="color:var(--text3);font-size:13px">Registrá el kilometraje actual primero.</p>'; return; }
-  const diff = config.kmProximo - kmActual;
-  const color = diff < 0 ? '#cc1a1a' : diff <= 500 ? '#8B6000' : '#1a7a3a';
-  const estado = diff < 0 ? '⚠️ VENCIDO' : diff <= 500 ? '🟡 PRÓXIMO' : '🟢 OK';
-  const bgColor = diff < 0 ? '#fdecea' : diff <= 500 ? '#fff8e1' : '#e8f7ee';
-  box.innerHTML = `
-    <div style="background:${bgColor};border-radius:10px;padding:14px;margin-top:4px">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Próximo cambio: <strong>${fmtKm(config.kmProximo)}</strong> | Actual: <strong>${fmtKm(kmActual)}</strong></div>
-      <div style="font-size:22px;font-weight:700;color:${color}">${estado} — ${diff >= 0 ? fmtKm(diff)+' restantes' : fmtKm(Math.abs(diff))+' vencido'}</div>
-      ${config.desc && config.desc.replace('ACEITE:','') ? `<div style="font-size:12px;color:var(--text3);margin-top:6px">📝 ${config.desc.replace('ACEITE:','')}</div>` : ''}
+function renderAceiteEstadoPanel() {
+  const panel = document.getElementById('aceite-estado-panel');
+  if (!panel) return;
+  const configs = mantenimientos.filter(m => m.esAceite);
+  if (!configs.length) { panel.innerHTML = ''; return; }
+
+  const cards = configs.map(config => {
+    const ult      = getUltimoKm(config.vehiculo);
+    const kmActual = ult ? (ult.valor||ult.km) : null;
+    const kmProx   = config.kmProximo;
+    const nota     = config.desc || '';
+
+    if (kmActual === null) return `
+      <div style="background:#f0f4f8;border:1px solid #dde3ed;border-radius:12px;padding:18px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px">🚘 ${config.vehiculo}</div>
+        <table style="width:100%;font-size:14px;border-collapse:collapse">
+          <tr><td style="color:var(--text3);padding:3px 0">Próximo cambio</td><td style="font-weight:700;text-align:right">${fmtKm(kmProx)}</td></tr>
+          <tr><td style="color:var(--text3);padding:3px 0">Km actuales</td><td style="text-align:right;color:var(--text3)">Sin registrar</td></tr>
+          <tr><td style="color:var(--text3);padding:3px 0">Km restantes</td><td style="text-align:right;color:var(--text3)">—</td></tr>
+        </table>
+        ${nota ? `<div style="font-size:12px;color:var(--text3);margin-top:8px;padding-top:8px;border-top:1px solid #dde3ed">📝 ${nota}</div>` : ''}
+      </div>`;
+
+    const diff    = kmProx - kmActual;
+    const color   = diff < 0 ? '#cc1a1a' : diff <= 500 ? '#8B6000' : '#1a7a3a';
+    const bgColor = diff < 0 ? '#fdecea' : diff <= 500 ? '#fff8e1' : '#e8f7ee';
+    const border  = diff < 0 ? '#f5c0bb' : diff <= 500 ? '#f0d88a' : '#b3dfc4';
+    const semaforo = diff < 0 ? '🔴' : diff <= 500 ? '🟡' : '🟢';
+    const restText = diff >= 0 ? fmtKm(diff) + ' km restantes' : fmtKm(Math.abs(diff)) + ' km vencido';
+
+    return `
+      <div style="background:${bgColor};border:1px solid ${border};border-radius:12px;padding:18px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px">🚘 ${config.vehiculo}</div>
+        <table style="width:100%;font-size:14px;border-collapse:collapse">
+          <tr><td style="color:var(--text2);padding:3px 0">Próximo cambio</td><td style="font-weight:700;text-align:right">${fmtKm(kmProx)}</td></tr>
+          <tr><td style="color:var(--text2);padding:3px 0">Km actuales</td><td style="font-weight:700;text-align:right">${fmtKm(kmActual)}</td></tr>
+          <tr><td style="color:var(--text2);padding:3px 0">Km restantes</td><td style="font-weight:700;text-align:right;color:${color}">${diff >= 0 ? fmtKm(diff) : '-'+fmtKm(Math.abs(diff))}</td></tr>
+        </table>
+        <div style="margin-top:12px;font-size:20px;font-weight:700;color:${color};text-align:center;padding:8px;background:rgba(255,255,255,0.5);border-radius:8px">
+          ${semaforo} ${restText}
+        </div>
+        ${nota ? `<div style="font-size:12px;color:var(--text2);margin-top:8px;padding-top:8px;border-top:1px solid ${border}">📝 ${nota}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="card">
+      <div class="card-title">🛢️ Estado del Aceite</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+        ${cards}
+      </div>
     </div>`;
 }
-
 
 // ══════════════════════════════════════════════════════════════════
 //  MANTENIMIENTO
@@ -1958,6 +1970,7 @@ async function initApp() {
   renderUltimosGastos();
   renderHistIngresos();
   renderVencimientos();
+  renderAceiteEstadoPanel();
   // Show admin buttons if admin
   if (currentUser.rol === 'admin') {
     const na = document.getElementById('nav-admin');
@@ -2010,6 +2023,7 @@ async function initApp() {
   renderUltimosGastos();
   renderHistIngresos();
   renderVencimientos();
+  renderAceiteEstadoPanel();
   // Default utilidades to current month
   const utilDesde = document.getElementById('util-desde');
   const utilHasta = document.getElementById('util-hasta');
