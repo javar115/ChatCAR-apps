@@ -440,6 +440,14 @@
     .nav-desktop { display: none !important; }
   }
 </style>
+<script>
+// Desregistrar Service Worker si existe
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
+}
+</script>
 </head>
 <body>
 
