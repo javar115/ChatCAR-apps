@@ -1872,6 +1872,14 @@ async function initApp() {
   if (unEl) unEl.textContent = currentUser.nombre || currentUser.username;
 
   await loadAllData();
+
+  // If no vehicles loaded, session might be stale - try reloading data
+  if (vehiculos.length === 0) {
+    try {
+      await loadAllData();
+    } catch(e) {}
+  }
+
   // Default fecha hoy
   const hoy = new Date();
   const y = hoy.getFullYear(), m = String(hoy.getMonth()+1).padStart(2,'0'), d = String(hoy.getDate()).padStart(2,'0');
