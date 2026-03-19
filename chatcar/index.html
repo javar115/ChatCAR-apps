@@ -1464,19 +1464,20 @@ async function guardarGasto() {
   try {
     const vId = await getVehiculoId(vehiculo);
     if (!vId) {
-      showAlert('gasto-alert','⚠️ El vehículo "' + vehiculo + '" no está en la base de datos. Contactá al administrador.','error');
+      showAlert('gasto-alert','⚠️ Vehículo no encontrado: ' + vehiculo,'error');
       return;
     }
-    await sbFetch('gastos','POST',{
+    const result = await sbFetch('gastos','POST',{
       vehiculo_id: vId, usuario_id: currentUser.id,
       fecha, importe, comercio, categoria, subcategoria, comentarios
     });
-    gastos.push(newGasto);
-    showAlert('gasto-alert','Gasto registrado correctamente.','success');
+    gastos.push({...newGasto, id: result && result[0] ? result[0].id : newGasto.id});
+    showAlert('gasto-alert','✅ Gasto guardado en Supabase (vId:' + vId.substring(0,8) + ')','success');
     limpiarGasto();
     renderUltimosGastos();
   } catch(e) {
-    showAlert('gasto-alert','Error al guardar: ' + e.message,'error');
+    showAlert('gasto-alert','❌ Error: ' + e.message,'error');
+    console.error('guardarGasto error:', e);
   }
 }
 
