@@ -1444,7 +1444,8 @@ function updateCharCount() {
   c.className = 'char-count' + (t.value.length > 120 ? ' warn' : '');
 }
 
-function guardarGasto() {
+async function guardarGasto() {
+  if (!currentUser) { showAlert('gasto-alert','Sesión expirada. Recargá la página.','error'); return; }
   const vehiculo = document.getElementById('g-vehiculo').value;
   const fecha = document.getElementById('g-fecha').value;
   const importe = parseFloat(document.getElementById('g-importe').value);
@@ -1460,11 +1461,23 @@ function guardarGasto() {
   if(categoria === 'B' && !subcategoria) return showAlert('gasto-alert','Seleccioná una subcategoría de Servicios.','error');
 
   const newGasto = { id: uid(), vehiculo, fecha, importe, comercio, categoria, subcategoria, comentarios };
-  gastos.push(newGasto);
-  saveGasto(newGasto);
-  showAlert('gasto-alert','Gasto registrado correctamente.','success');
-  limpiarGasto();
-  renderUltimosGastos();
+  try {
+    const vId = await getVehiculoId(vehiculo);
+    if (!vId) {
+      showAlert('gasto-alert','⚠️ El vehículo "' + vehiculo + '" no está en la base de datos. Contactá al administrador.','error');
+      return;
+    }
+    await sbFetch('gastos','POST',{
+      vehiculo_id: vId, usuario_id: currentUser.id,
+      fecha, importe, comercio, categoria, subcategoria, comentarios
+    });
+    gastos.push(newGasto);
+    showAlert('gasto-alert','Gasto registrado correctamente.','success');
+    limpiarGasto();
+    renderUltimosGastos();
+  } catch(e) {
+    showAlert('gasto-alert','Error al guardar: ' + e.message,'error');
+  }
 }
 
 function limpiarGasto() {
