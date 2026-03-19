@@ -1588,7 +1588,7 @@ function renderUltimosGastos() {
 function eliminarGasto(id) {
   confirmDelete('¿Eliminar este gasto?', () => {
     gastos = gastos.filter(g => g.id !== id);
-    save();
+    sbFetch('gastos','DELETE',null,`?id=eq.${id}`).catch(e=>console.error(e));
     renderUltimosGastos();
     aplicarFiltros();
   });
@@ -1925,7 +1925,7 @@ function confirmDelete(msg, cb) {
   document.getElementById('modal-delete').classList.add('open');
 }
 function closeModal() { document.getElementById('modal-delete').classList.remove('open'); _confirmCb = null; }
-document.getElementById('modal-confirm-btn').onclick = () => { if(_confirmCb) _confirmCb(); closeModal(); };
+// modal-confirm-btn onclick is set directly in HTML
 document.getElementById('modal-delete').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
 
 // ══════════════════════════════════════════════════════════════════
@@ -2123,7 +2123,7 @@ function renderHistIngresos() {
       <td><span class="badge badge-blue">${i.fuente}</span></td>
       <td style="font-weight:600;color:#1a7a3a">${fmt(i.importe)}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${i.obs||''}">${i.obs||'—'}</td>
-      <td><button class="btn-icon" onclick="eliminarIngreso(${i.id})" title="Eliminar">🗑</button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="eliminarIngreso('${i.id}')">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -2700,5 +2700,17 @@ async function importarDatos(event) {
     <a href="https://www.chatcar.com.ar" target="_blank">🌐 www.chatcar.com.ar — Tu comunidad en movimiento &nbsp;|&nbsp; v6.0</a>
   </div>
 
+
+<!-- MODAL CONFIRMACIÓN DELETE -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <div class="modal-title">⚠️ Confirmar eliminación</div>
+    <p id="modal-msg" style="color:var(--text2);margin-bottom:20px;font-size:15px"></p>
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" id="modal-confirm-btn" onclick="if(_confirmCb){_confirmCb();closeModal();}">✕ Eliminar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
