@@ -1212,34 +1212,72 @@ async function loadAllData() {
   if (!currentUser) return;
   const uid = currentUser.id;
   const isAdmin = currentUser.rol === 'admin';
-  const vFilter = isAdmin ? '' : `?usuario_id=eq.${uid}&order=nombre`;
-  const gFilter = isAdmin ? '?order=fecha.desc' : `?usuario_id=eq.${uid}&order=fecha.desc`;
 
-  const [v, g, k, m, i, vc] = await Promise.all([
-    sbFetch('vehiculos', 'GET', null, vFilter || '?order=nombre'),
-    sbFetch('gastos',    'GET', null, gFilter),
-    sbFetch('km_registros',  'GET', null, isAdmin ? '?order=fecha.desc' : `?usuario_id=eq.${uid}&order=fecha.desc`),
-    sbFetch('mantenimientos','GET', null, isAdmin ? '?order=fecha' : `?usuario_id=eq.${uid}&order=fecha`),
-    sbFetch('ingresos',  'GET', null, isAdmin ? '?order=fecha.desc' : `?usuario_id=eq.${uid}&order=fecha.desc`),
-    sbFetch('vencimientos','GET', null, isAdmin ? '?order=fecha' : `?usuario_id=eq.${uid}&order=fecha`),
+  // Fetch vehicles first to build the ID->name map
+  const vRows = await sbFetch('vehiculos', 'GET', null,
+    isAdmin ? '?order=nombre' : `?usuario_id=eq.${uid}&order=nombre`);
+
+  // Build ID -> name map
+  const vMap = {};
+  vRows.forEach(x => { vMap[x.id] = x.nombre; });
+  vehiculos = vRows.map(x => x.nombre);
+
+  // Fetch all other data in parallel
+  const uf = isAdmin ? '' : `&usuario_id=eq.${uid}`;
+  const [g, k, m, i, vc] = await Promise.all([
+    sbFetch('gastos',          'GET', null, `?order=fecha.desc${uf}`),
+    sbFetch('km_registros',    'GET', null, `?order=fecha.desc${uf}`),
+    sbFetch('mantenimientos',  'GET', null, `?order=created_at.desc${uf}`),
+    sbFetch('ingresos',        'GET', null, `?order=fecha.desc${uf}`),
+    sbFetch('vencimientos',    'GET', null, `?order=fecha${uf}`),
   ]);
 
-  // Map Supabase records to app format
-  vehiculos      = v.map(x => x.nombre);
-  gastos         = g.map(x => ({ id:x.id, vehiculo:x.vehiculo_id, fecha:x.fecha, importe:Number(x.importe), comercio:x.comercio||'', categoria:x.categoria||'', subcategoria:x.subcategoria||'', comentarios:x.comentarios||'' }));
-  kmRegistros    = k.map(x => ({ id:x.id, vehiculoId:x.vehiculo_id, fecha:x.fecha, km:Number(x.km) }));
-  mantenimientos = m.map(x => ({ id:x.id, vehiculo:vMap[x.vehiculo_id]||x.vehiculo_id, desc:x.descripcion||x.tipo||'', kmProximo:Number(x.km_proximo)||0, completado:x.completado }));
-  ingresos       = i.map(x => ({ id:x.id, vehiculoId:x.vehiculo_id, fecha:x.fecha, importe:Number(x.importe), fuente:x.fuente||'', obs:x.obs||'' }));
-  vencimientos   = vc.map(x => ({ id:x.id, vehiculo:x.vehiculo_id, fecha:x.fecha, importe:Number(x.importe), comercio:x.comercio||'', categoria:x.categoria||'', comentarios:x.comentarios||'' }));
+  // Map to app format using vMap
+  gastos = g.map(x => ({
+    id: x.id,
+    vehiculo:     vMap[x.vehiculo_id] || x.vehiculo_id,
+    fecha:        x.fecha,
+    importe:      Number(x.importe),
+    comercio:     x.comercio     || '',
+    categoria:    x.categoria    || '',
+    subcategoria: x.subcategoria || '',
+    comentarios:  x.comentarios  || ''
+  }));
 
-  // Map vehiculo IDs back to names using vehiculos table
-  const vMap = {};
-  v.forEach(x => { vMap[x.id] = x.nombre; });
-  gastos         = gastos.map(g => ({...g, vehiculo: vMap[g.vehiculo] || g.vehiculo}));
-  kmRegistros    = kmRegistros.map(k => ({...k, vehiculoId: vMap[k.vehiculoId] || k.vehiculoId}));
-  mantenimientos = mantenimientos.map(m => ({...m, vehiculo: vMap[m.vehiculo] || m.vehiculo}));
-  ingresos       = ingresos.map(i => ({...i, vehiculoId: vMap[i.vehiculoId] || i.vehiculoId}));
-  vencimientos   = vencimientos.map(vc => ({...vc, vehiculo: vMap[vc.vehiculo] || vc.vehiculo}));
+  kmRegistros = k.map(x => ({
+    id:        x.id,
+    vehiculoId: vMap[x.vehiculo_id] || x.vehiculo_id,
+    fecha:     x.fecha,
+    km:        Number(x.km),
+    valor:     Number(x.km)
+  }));
+
+  mantenimientos = m.map(x => ({
+    id:         x.id,
+    vehiculo:   vMap[x.vehiculo_id] || x.vehiculo_id,
+    desc:       x.descripcion || x.tipo || '',
+    kmProximo:  Number(x.km_proximo) || 0,
+    completado: x.completado || false
+  }));
+
+  ingresos = i.map(x => ({
+    id:        x.id,
+    vehiculoId: vMap[x.vehiculo_id] || x.vehiculo_id,
+    fecha:     x.fecha,
+    importe:   Number(x.importe),
+    fuente:    x.fuente || '',
+    obs:       x.obs    || ''
+  }));
+
+  vencimientos = vc.map(x => ({
+    id:          x.id,
+    vehiculo:    vMap[x.vehiculo_id] || x.vehiculo_id,
+    fecha:       x.fecha,
+    importe:     Number(x.importe),
+    comercio:    x.comercio    || '',
+    categoria:   x.categoria   || '',
+    comentarios: x.comentarios || ''
+  }));
 }
 
 // ── Save helpers — write to Supabase ──
