@@ -1,4 +1,4 @@
-const CACHE = 'chatcar-v4';
+const CACHE = 'chatcar-v6';
 const FILES = ['./index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
