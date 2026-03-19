@@ -1237,9 +1237,14 @@ async function loadAllData() {
 // ── Save helpers — write to Supabase ──
 async function saveGasto(g) {
   const vId = await getVehiculoId(g.vehiculo);
-  await sbFetch('gastos', g.id && g.id.length > 10 ? 'PATCH' : 'POST',
+  if (!vId) {
+    console.error('saveGasto: vehículo no encontrado en Supabase:', g.vehiculo);
+    showAlert('gasto-alert', '⚠️ Error: vehículo no encontrado en la base de datos. Contactá al administrador.', 'error');
+    return;
+  }
+  await sbFetch('gastos', 'POST',
     { vehiculo_id:vId, usuario_id:currentUser.id, fecha:g.fecha, importe:g.importe, comercio:g.comercio, categoria:g.categoria, subcategoria:g.subcategoria, comentarios:g.comentarios },
-    g.id && g.id.length > 10 ? `?id=eq.${g.id}` : '');
+    '');
 }
 
 async function deleteGasto(id) {
@@ -1248,6 +1253,7 @@ async function deleteGasto(id) {
 
 async function saveIngreso(i) {
   const vId = await getVehiculoId(i.vehiculoId);
+  if (!vId) { console.error('saveIngreso: vehículo no encontrado:', i.vehiculoId); return; }
   await sbFetch('ingresos', 'POST',
     { vehiculo_id:vId, usuario_id:currentUser.id, fecha:i.fecha, importe:i.importe, fuente:i.fuente, obs:i.obs });
 }
@@ -1269,11 +1275,13 @@ async function deleteVehiculo(nombre) {
 
 async function saveKm(k) {
   const vId = await getVehiculoId(k.vehiculoId);
+  if (!vId) { console.error('saveKm: vehículo no encontrado:', k.vehiculoId); return; }
   await sbFetch('km_registros','POST',{ vehiculo_id:vId, usuario_id:currentUser.id, fecha:k.fecha, km:k.km });
 }
 
 async function saveMant(m) {
   const vId = await getVehiculoId(m.vehiculo);
+  if (!vId) { console.error('saveMant: vehículo no encontrado:', m.vehiculo); return; }
   await sbFetch('mantenimientos','POST',{ vehiculo_id:vId, usuario_id:currentUser.id, fecha:m.fecha, tipo:m.tipo, descripcion:m.descripcion, completado:m.completado||false });
 }
 
@@ -1283,6 +1291,7 @@ async function deleteMant(id) {
 
 async function saveVencimiento(v) {
   const vId = await getVehiculoId(v.vehiculo);
+  if (!vId) { console.error('saveVencimiento: vehículo no encontrado:', v.vehiculo); return; }
   await sbFetch('vencimientos','POST',{ vehiculo_id:vId, usuario_id:currentUser.id, fecha:v.fecha, importe:v.importe, comercio:v.comercio, categoria:v.categoria, comentarios:v.comentarios });
 }
 
@@ -1296,8 +1305,13 @@ async function deleteVencimiento(id) {
 
 // Helper: get vehiculo UUID by name
 async function getVehiculoId(nombre) {
-  const rows = await sbFetch('vehiculos','GET',null,`?nombre=eq.${encodeURIComponent(nombre)}&usuario_id=eq.${currentUser.id}`);
-  return rows && rows.length > 0 ? rows[0].id : null;
+  // Try with usuario_id first
+  let rows = await sbFetch('vehiculos','GET',null,`?nombre=eq.${encodeURIComponent(nombre)}&usuario_id=eq.${currentUser.id}`);
+  if (rows && rows.length > 0) return rows[0].id;
+  // Fallback: search by name only (for admin or mis-assigned vehicles)
+  rows = await sbFetch('vehiculos','GET',null,`?nombre=eq.${encodeURIComponent(nombre)}`);
+  if (rows && rows.length > 0) return rows[0].id;
+  return null;
 }
 
 // Legacy save() — now no-op, each action saves directly
@@ -1447,7 +1461,7 @@ function guardarGasto() {
 
   const newGasto = { id: uid(), vehiculo, fecha, importe, comercio, categoria, subcategoria, comentarios };
   gastos.push(newGasto);
-  saveGasto(newGasto).catch(e => console.error('Error saving gasto:', e));
+  saveGasto(newGasto);
   showAlert('gasto-alert','Gasto registrado correctamente.','success');
   limpiarGasto();
   renderUltimosGastos();
