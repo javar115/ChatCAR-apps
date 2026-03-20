@@ -187,7 +187,7 @@ function App() {
     properties: <Entities type="properties" {...ctx}/>,
     vehicles:   <Entities type="vehicles"   {...ctx}/>,
     expenses:   <ExpenseList {...ctx}/>,
-    archivo:    <Archivo archivados={archivados} pendientesAnteriores={pendientesAnteriores}/>,
+    archivo:    <Archivo archivados={archivados} pendientesAnteriores={pendientesAnteriores} reload={reload} setModal={setModal} showToast={showToast}/>,
     reports:    <Reports data={data}/>,
   };
 
@@ -492,7 +492,7 @@ function ExpenseList({ gastosMesActual, reload, setModal, showToast, hoy }) {
 }
 
 // ── Archivo ───────────────────────────────────────────────────────────────────
-function Archivo({ archivados, pendientesAnteriores }) {
+function Archivo({ archivados, pendientesAnteriores, reload, setModal, showToast }) {
   const [tab, setTab] = useState("pendientes");
 
   const items = tab==="pendientes" ? pendientesAnteriores : archivados;
@@ -531,7 +531,13 @@ function Archivo({ archivados, pendientesAnteriores }) {
             <p style={{...S.sectionTitle,margin:0}}>{labelMes(mes)}</p>
             <p style={{color:"#6b7280",fontSize:12}}>{fmt(gastos.reduce((s,e)=>s+parseFloat(e.paid_amount??e.amount),0))}</p>
           </div>
-          {gastos.map(e=><ExpenseRow key={e.id} expense={e} compact/>)}
+          {gastos.map(e=>(
+            <ExpenseRow key={e.id} expense={e}
+              onEdit={()=>setModal({type:"expense",item:e})}
+              onPay={tab==="pendientes" ? ()=>setModal({type:"payPending",expense:e}) : undefined}
+              onDelete={()=>setModal({type:"deleteConfirm",expense:e})}
+            />
+          ))}
         </div>
       ))}
     </div>
