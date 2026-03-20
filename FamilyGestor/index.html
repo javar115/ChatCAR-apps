@@ -748,9 +748,9 @@ function ExpenseModal({ data, reload, close, showToast, item, hoy }) {
     date:       item?.date       || today(),
     notes:      item?.notes      || "",
     status:     item?.status     || "pending",
-    mes_origen: item?.mes_origen || hoy,
+    mes_origen: item?.mes_origen || (item?.date ? item.date.slice(0,7) : hoy),
   });
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const set=(k,v)=>setForm(f=>{const upd={...f,[k]:v}; if(k==="date") upd.mes_origen=v.slice(0,7); return upd;});
   const entities=form.grupo==="Propiedades"?data.properties:form.grupo==="Vehículos"?data.vehicles:[];
 
   const handleSave=async(status)=>{
