@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Presupuesto"/>
+<title>Gestor de Presupuesto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #0f1117; }
+  #root { height: 100%; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+  input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  COMPLETÁ ESTAS DOS LÍNEAS CON TUS DATOS DE SUPABASE
+//     Supabase → tu proyecto → Settings → API
+// ─────────────────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = "https://TU_PROJECT_ID.supabase.co";
+const SUPABASE_KEY  = "TU_ANON_KEY_AQUI";
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const { useState, useEffect, useMemo, useCallback } = React;
+
+// ── constantes ────────────────────────────────────────────────────────────────
+const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+const EXPENSE_TYPES = {
+  Propiedades: ["Luz","Agua","Gas","Expensas","Alquileres","Otros"],
+  Vehículos:   ["Patentes","Seguros","Combustible","Otros"],
+  Familiares:  ["Alimentación y limpieza","Salud","Educación","Ocio","Otros"],
+};
+
+const GROUP_ICONS  = { Propiedades:"🏠", Vehículos:"🚗", Familiares:"👨‍👩‍👧" };
+const GROUP_COLORS = {
+  Propiedades: { bg:"#0e1f0e", accent:"#4ade80", border:"#1a3a1a" },
+  Vehículos:   { bg:"#0e0e1f", accent:"#818cf8", border:"#1a1a3a" },
+  Familiares:  { bg:"#1f0e0e", accent:"#fb923c", border:"#3a1a1a" },
+};
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+const fmt     = n => new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS"}).format(n||0);
+const fmtDate = d => d ? new Date(d+"T00:00:00").toLocaleDateString("es-AR") : "—";
+const today   = () => new Date().toISOString().slice(0,10);
+
+// ── estilos base ──────────────────────────────────────────────────────────────
+const S = {
+  root:        { display:"flex", height:"100vh", fontFamily:"'DM Sans',system-ui,sans-serif", color:"#e5e7eb", background:"#0f1117", overflow:"hidden" },
+  sidebar:     { width:220, background:"#111827", borderRight:"1px solid #1f2937", display:"flex", flexDirection:"column", padding:"20px 10px", gap:2, flexShrink:0, overflowY:"auto" },
+  sidebarMini: { width:60, background:"#111827", borderRight:"1px solid #1f2937", display:"flex", flexDirection:"column", padding:"16px 8px", gap:2, flexShrink:0 },
+  logo:        { display:"flex", alignItems:"center", gap:10, padding:"0 10px 20px" },
+  logoMark:    { width:34, height:34, borderRadius:8, background:"#4ade80", display:"flex", alignItems:"center", justifyContent:"center", color:"#0f1117", fontWeight:800, fontSize:17, flexShrink:0 },
+  main:        { flex:1, display:"flex", flexDirection:"column", overflow:"hidden" },
+  topbar:      { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 24px", borderBottom:"1px solid #1f2937", background:"#111827", flexShrink:0 },
+  content:     { flex:1, padding:24, overflowY:"auto", animation:"fadeIn 0.2s ease" },
+  card:        { background:"#111827", border:"1px solid #1f2937", borderRadius:14 },
+  input:       { width:"100%", background:"#0a0d14", border:"1px solid #374151", borderRadius:8, padding:"9px 12px", color:"#e5e7eb", fontSize:14, outline:"none", fontFamily:"inherit" },
+  select:      { width:"100%", background:"#0a0d14", border:"1px solid #374151", borderRadius:8, padding:"9px 12px", color:"#e5e7eb", fontSize:14, outline:"none", fontFamily:"inherit", cursor:"pointer" },
+  label:       { display:"block", color:"#6b7280", fontSize:11, marginBottom:5, textTransform:"uppercase", letterSpacing:"0.06em", fontWeight:600 },
+  btnPrimary:  { background:"#4ade80", color:"#0a0d14", border:"none", borderRadius:8, padding:"9px 18px", fontWeight:700, cursor:"pointer", fontSize:14, fontFamily:"inherit" },
+  btnOutline:  { background:"transparent", color:"#9ca3af", border:"1px solid #374151", borderRadius:8, padding:"7px 14px", cursor:"pointer", fontSize:13, fontFamily:"inherit" },
+  btnDanger:   { background:"#1f0808", color:"#fca5a5", border:"1px solid #7f1d1d", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontSize:13, fontFamily:"inherit" },
+  btnSuccess:  { background:"#052e16", color:"#4ade80", border:"1px solid #166534", borderRadius:8, padding:"7px 14px", cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" },
+  btnWarning:  { background:"#1c0d00", color:"#fb923c", border:"1px solid #78350f", borderRadius:8, padding:"7px 14px", cursor:"pointer", fontSize:13, fontWeight:700, fontFamily:"inherit" },
+  badge:       { padding:"2px 8px", borderRadius:999, fontSize:11, fontWeight:700 },
+  overlay:     { position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:100, padding:16, backdropFilter:"blur(4px)" },
+  modalBox:    { background:"#111827", border:"1px solid #1f2937", borderRadius:16, width:"100%", maxWidth:480, maxHeight:"92vh", display:"flex", flexDirection:"column", animation:"slideUp 0.2s ease" },
+  toast:       { position:"fixed", bottom:24, right:24, borderRadius:10, padding:"12px 20px", fontSize:14, fontWeight:600, zIndex:200, animation:"fadeIn 0.2s ease" },
+  progressTrack:{ background:"#1f2937", borderRadius:999, height:8, overflow:"hidden" },
+  progressBar:  { height:"100%", borderRadius:999, transition:"width 0.6s ease" },
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// APP ROOT
+// ═════════════════════════════════════════════════════════════════════════════
+function App() {
+  const [data, setData]   = useState({ budgets:[], properties:[], vehicles:[], expenses:[] });
+  const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState(false);
+  const [view, setView]   = useState("dashboard");
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // detect mobile
+  const isMobile = window.innerWidth < 700;
+
+  const showToast = useCallback((msg, ok=true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 3500);
+  }, []);
+
+  const reload = useCallback(async (table) => {
+    const order = table === "expenses"
+      ? { column:"date", ascending:false }
+      : { column:"created_at", ascending:true };
+    const { data: rows, error } = await db.from(table).select("*").order(order.column, { ascending: order.ascending });
+    if (!error) setData(prev => ({ ...prev, [table]: rows || [] }));
+  }, []);
+
+  const reloadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [b, p, v, e] = await Promise.all([
+        db.from("budgets").select("*").order("year").order("month"),
+        db.from("properties").select("*").order("created_at"),
+        db.from("vehicles").select("*").order("created_at"),
+        db.from("expenses").select("*").order("date", { ascending:false }),
+      ]);
+      if (b.error || p.error || v.error || e.error) throw new Error("DB error");
+      setData({ budgets:b.data||[], properties:p.data||[], vehicles:v.data||[], expenses:e.data||[] });
+      setDbError(false);
+    } catch {
+      setDbError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { reloadAll(); }, [reloadAll]);
+
+  const activeBudget = useMemo(() => {
+    const now = new Date();
+    return data.budgets.find(b => b.year===now.getFullYear() && b.month===now.getMonth()+1)
+      || data.budgets[data.budgets.length-1] || null;
+  }, [data.budgets]);
+
+  const consumed = useMemo(() => {
+    if (!activeBudget) return 0;
+    return data.expenses
+      .filter(e => { const d=new Date(e.date+"T00:00:00"); return d.getFullYear()===activeBudget.year && d.getMonth()+1===activeBudget.month; })
+      .reduce((s,e) => s + parseFloat(e.paid_amount ?? e.amount), 0);
+  }, [data.expenses, activeBudget]);
+
+  const pct = activeBudget ? Math.min(100,(consumed/activeBudget.total)*100) : 0;
+
+  if (loading) return <Loader/>;
+  if (dbError)  return <DBError url={SUPABASE_URL} onRetry={reloadAll}/>;
+
+  const views = {
+    dashboard:  <Dashboard  data={data} activeBudget={activeBudget} consumed={consumed} pct={pct} setView={setView} setModal={setModal}/>,
+    properties: <Entities   type="properties" data={data} reload={reload} setModal={setModal} showToast={showToast}/>,
+    vehicles:   <Entities   type="vehicles"   data={data} reload={reload} setModal={setModal} showToast={showToast}/>,
+    expenses:   <ExpenseList data={data} reload={reload} setModal={setModal} showToast={showToast}/>,
+    reports:    <Reports    data={data}/>,
+  };
+
+  return (
+    <div style={S.root}>
+      {/* sidebar desktop */}
+      {!isMobile && <Sidebar view={view} setView={setView}/>}
+
+      <main style={S.main}>
+        <TopBar view={view} setModal={setModal} isMobile={isMobile} menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
+
+        {/* mobile drawer */}
+        {isMobile && menuOpen && (
+          <div style={{ position:"fixed", inset:0, zIndex:90 }} onClick={() => setMenuOpen(false)}>
+            <div style={{ position:"absolute", left:0, top:0, bottom:0, width:220, background:"#111827", borderRight:"1px solid #1f2937", zIndex:91 }} onClick={e=>e.stopPropagation()}>
+              <Sidebar view={view} setView={v => { setView(v); setMenuOpen(false); }}/>
+            </div>
+          </div>
+        )}
+
+        <div style={S.content}>{views[view]}</div>
+      </main>
+
+      {modal?.type==="budget"        && <BudgetModal      data={data} reload={reload} close={()=>setModal(null)} showToast={showToast}/>}
+      {modal?.type==="property"      && <EntityModal      type="properties" reload={reload} close={()=>setModal(null)} showToast={showToast} item={modal.item}/>}
+      {modal?.type==="vehicle"       && <EntityModal      type="vehicles"   reload={reload} close={()=>setModal(null)} showToast={showToast} item={modal.item}/>}
+      {modal?.type==="expense"       && <ExpenseModal     data={data} reload={reload} close={()=>setModal(null)} showToast={showToast} item={modal.item}/>}
+      {modal?.type==="payPending"    && <PayPendingModal  expense={modal.expense} reload={reload} close={()=>setModal(null)} showToast={showToast}/>}
+      {modal?.type==="deleteConfirm" && <DeleteConfirmModal expense={modal.expense} reload={reload} close={()=>setModal(null)} showToast={showToast}/>}
+
+      {toast && (
+        <div style={{ ...S.toast, background:toast.ok?"#052e16":"#1f0808", border:`1px solid ${toast.ok?"#166534":"#7f1d1d"}`, color:toast.ok?"#4ade80":"#fca5a5" }}>
+          {toast.ok ? "✓" : "✕"} {toast.msg}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Loader / Error ────────────────────────────────────────────────────────────
+function Loader() {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", background:"#0f1117", gap:16 }}>
+      <div style={{ width:40, height:40, borderRadius:"50%", border:"3px solid #1f2937", borderTopColor:"#4ade80", animation:"spin 0.8s linear infinite" }}/>
+      <p style={{ color:"#6b7280", fontSize:14 }}>Conectando con Supabase...</p>
+    </div>
+  );
+}
+function DBError({ url, onRetry }) {
+  const notConfigured = url.includes("TU_PROJECT_ID");
+  return (
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100vh", background:"#0f1117", gap:16, padding:24, textAlign:"center" }}>
+      <span style={{ fontSize:48 }}>⚠️</span>
+      {notConfigured ? (<>
+        <p style={{ color:"#f87171", fontWeight:700, fontSize:18 }}>Falta configurar Supabase</p>
+        <p style={{ color:"#9ca3af", maxWidth:420, lineHeight:1.6 }}>
+          Abrí el archivo <code style={{color:"#fb923c"}}>index.html</code>, buscá las líneas marcadas con ⚠️ cerca del inicio del script, y reemplazá <code style={{color:"#fb923c"}}>TU_PROJECT_ID</code> y <code style={{color:"#fb923c"}}>TU_ANON_KEY</code> con los datos de tu proyecto de Supabase.
+        </p>
+      </>) : (<>
+        <p style={{ color:"#f87171", fontWeight:700, fontSize:18 }}>No se pudo conectar a Supabase</p>
+        <p style={{ color:"#9ca3af" }}>Verificá tu conexión a internet y que las tablas estén creadas.</p>
+        <button style={{ ...S.btnPrimary, marginTop:8 }} onClick={onRetry}>Reintentar</button>
+      </>)}
+    </div>
+  );
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function Sidebar({ view, setView }) {
+  const items = [
+    { id:"dashboard",  icon:"◈",  label:"Dashboard" },
+    { id:"properties", icon:"🏠", label:"Propiedades" },
+    { id:"vehicles",   icon:"🚗", label:"Vehículos" },
+    { id:"expenses",   icon:"📋", label:"Gastos" },
+    { id:"reports",    icon:"📊", label:"Reportes" },
+  ];
+  return (
+    <nav style={S.sidebar}>
+      <div style={S.logo}>
+        <div style={S.logoMark}>$</div>
+        <span style={{ color:"#e5e7eb", fontWeight:700, fontSize:15 }}>Presupuesto</span>
+      </div>
+      {items.map(i => (
+        <button key={i.id}
+          style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:8, border:"none",
+            background: view===i.id ? "#1f2937":"transparent",
+            color: view===i.id ? "#e5e7eb":"#9ca3af",
+            cursor:"pointer", fontSize:14, width:"100%", textAlign:"left", fontFamily:"inherit", transition:"background 0.15s" }}
+          onClick={() => setView(i.id)}>
+          <span style={{ width:20, textAlign:"center" }}>{i.icon}</span>
+          <span>{i.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+// ── TopBar ────────────────────────────────────────────────────────────────────
+function TopBar({ view, setModal, isMobile, menuOpen, setMenuOpen }) {
+  const titles  = { dashboard:"Dashboard", properties:"Propiedades", vehicles:"Vehículos", expenses:"Gastos", reports:"Reportes" };
+  const actions = {
+    dashboard:  [{ label:"+ Presupuesto", type:"budget" }],
+    properties: [{ label:"+ Propiedad",   type:"property" }],
+    vehicles:   [{ label:"+ Vehículo",    type:"vehicle" }],
+    expenses:   [{ label:"+ Gasto",       type:"expense" }],
+    reports:    [],
+  };
+  return (
+    <header style={S.topbar}>
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        {isMobile && (
+          <button style={{ background:"none", border:"none", color:"#9ca3af", cursor:"pointer", fontSize:20, padding:4 }} onClick={() => setMenuOpen(o=>!o)}>
+            {menuOpen ? "✕" : "☰"}
+          </button>
+        )}
+        <h1 style={{ fontSize:20, fontWeight:700, color:"#f3f4f6" }}>{titles[view]}</h1>
+      </div>
+      <div style={{ display:"flex", gap:8 }}>
+        {actions[view]?.map(a => (
+          <button key={a.type} style={S.btnPrimary} onClick={() => setModal({ type:a.type })}>{a.label}</button>
+        ))}
+      </div>
+    </header>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function Dashboard({ data, activeBudget, consumed, pct, setView, setModal }) {
+  const pending      = data.expenses.filter(e => e.status==="pending");
+  const paid         = data.expenses.filter(e => e.status==="paid");
+  const pendingTotal = pending.reduce((s,e)=>s+parseFloat(e.amount),0);
+  const paidTotal    = paid.reduce((s,e)=>s+parseFloat(e.paid_amount??e.amount),0);
+  const byGroup = ["Propiedades","Vehículos","Familiares"].map(g => ({
+    group:g,
+    total: data.expenses.filter(e=>e.grupo===g).reduce((s,e)=>s+parseFloat(e.paid_amount??e.amount),0),
+    count: data.expenses.filter(e=>e.grupo===g).length,
+  }));
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+      {/* Budget */}
+      <div style={{ ...S.card, padding:24 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
+          <div>
+            <p style={{ color:"#6b7280", fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em", fontWeight:600 }}>Presupuesto activo</p>
+            {activeBudget
+              ? <p style={{ color:"#4ade80", fontSize:34, fontWeight:800, letterSpacing:"-0.02em", marginTop:4 }}>{fmt(activeBudget.total)}</p>
+              : <p style={{ color:"#6b7280", marginTop:8 }}>Sin presupuesto registrado</p>}
+            {activeBudget && <p style={{ color:"#6b7280", fontSize:13, marginTop:2 }}>{MONTHS[activeBudget.month-1]} {activeBudget.year}</p>}
+          </div>
+          {!activeBudget && <button style={S.btnPrimary} onClick={() => setModal({type:"budget"})}>Registrar presupuesto</button>}
+        </div>
+        {activeBudget && (
+          <div style={{ marginTop:18 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+              <span style={{ color:"#6b7280", fontSize:13 }}>Consumido: {fmt(consumed)}</span>
+              <span style={{ color:pct>80?"#f87171":pct>60?"#fb923c":"#4ade80", fontWeight:700 }}>{pct.toFixed(1)}%</span>
+            </div>
+            <div style={S.progressTrack}>
+              <div style={{ ...S.progressBar, width:`${pct}%`, background:pct>80?"#f87171":pct>60?"#fb923c":"#4ade80" }}/>
+            </div>
+            <p style={{ color:"#4b5563", fontSize:12, marginTop:6 }}>Disponible: {fmt(activeBudget.total - consumed)}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12 }}>
+        {[
+          { label:"Pendientes",   value:fmt(pendingTotal), sub:`${pending.length} gastos`,      color:"#fb923c" },
+          { label:"Pagados",      value:fmt(paidTotal),    sub:`${paid.length} gastos`,          color:"#4ade80" },
+          { label:"Propiedades",  value:data.properties.length, sub:"registradas", color:"#818cf8", click:()=>setView("properties") },
+          { label:"Vehículos",    value:data.vehicles.length,   sub:"registrados", color:"#f472b6", click:()=>setView("vehicles") },
+        ].map(s => (
+          <div key={s.label} onClick={s.click}
+            style={{ ...S.card, padding:"14px 18px", cursor:s.click?"pointer":"default", borderColor:s.color+"33" }}>
+            <p style={{ color:"#6b7280", fontSize:11, textTransform:"uppercase", letterSpacing:"0.05em", fontWeight:600 }}>{s.label}</p>
+            <p style={{ color:s.color, fontSize:24, fontWeight:700, margin:"6px 0 3px" }}>{s.value}</p>
+            <p style={{ color:"#4b5563", fontSize:12 }}>{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* By group */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:12 }}>
+        {byGroup.map(g => {
+          const c = GROUP_COLORS[g.group];
+          return (
+            <div key={g.group} style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:14, padding:"18px 14px", textAlign:"center" }}>
+              <span style={{ fontSize:28 }}>{GROUP_ICONS[g.group]}</span>
+              <p style={{ color:"#d1d5db", fontWeight:600, marginTop:8, fontSize:14 }}>{g.group}</p>
+              <p style={{ color:c.accent, fontSize:18, fontWeight:700, marginTop:4 }}>{fmt(g.total)}</p>
+              <p style={{ color:"#4b5563", fontSize:12, marginTop:2 }}>{g.count} gastos</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Recent expenses */}
+      {data.expenses.length > 0 && (
+        <div style={{ ...S.card, padding:20 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+            <h3 style={{ color:"#e5e7eb", fontWeight:600 }}>Últimos gastos</h3>
+            <button style={S.btnOutline} onClick={() => setView("expenses")}>Ver todos</button>
+          </div>
+          {data.expenses.slice(0,5).map(e => <ExpenseRow key={e.id} expense={e} compact/>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Entities ──────────────────────────────────────────────────────────────────
+function Entities({ type, data, reload, setModal, showToast }) {
+  const items   = data[type];
+  const isProps = type==="properties";
+  const label   = isProps ? "propiedad" : "vehículo";
+
+  const handleDelete = async id => {
+    const { error } = await db.from(type).delete().eq("id",id);
+    if (error) { showToast("Error al eliminar",false); return; }
+    await reload(type);
+    showToast("Eliminado correctamente");
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      {items.length===0 && (
+        <div style={{ ...S.card, padding:48, textAlign:"center" }}>
+          <span style={{ fontSize:40 }}>{isProps?"🏠":"🚗"}</span>
+          <p style={{ color:"#6b7280", marginTop:12 }}>No hay {label}s registrados</p>
+        </div>
+      )}
+      {items.map(item => (
+        <div key={item.id} style={{ ...S.card, padding:"14px 18px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+          <div>
+            <p style={{ color:"#e5e7eb", fontWeight:600 }}>{item.name}</p>
+            {item.description && <p style={{ color:"#6b7280", fontSize:13, marginTop:2 }}>{item.description}</p>}
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <button style={S.btnOutline} onClick={() => setModal({ type:isProps?"property":"vehicle", item })}>Editar</button>
+            <button style={S.btnDanger}  onClick={() => handleDelete(item.id)}>Eliminar</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── ExpenseList ───────────────────────────────────────────────────────────────
+function ExpenseList({ data, reload, setModal, showToast }) {
+  const [filter, setFilter] = useState({ group:"", status:"", search:"" });
+  const setF = (k,v) => setFilter(f => ({...f,[k]:v}));
+
+  const filtered = data.expenses.filter(e => {
+    if (filter.group  && e.grupo  !==filter.group)  return false;
+    if (filter.status && e.status !==filter.status) return false;
+    if (filter.search && !e.service.toLowerCase().includes(filter.search.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+        <input style={{ ...S.input, flex:1, minWidth:140 }} placeholder="Buscar servicio..."
+          value={filter.search} onChange={e=>setF("search",e.target.value)}/>
+        <select style={{ ...S.select, flex:1, minWidth:140 }} value={filter.group} onChange={e=>setF("group",e.target.value)}>
+          <option value="">Todos los grupos</option>
+          {["Propiedades","Vehículos","Familiares"].map(g=><option key={g}>{g}</option>)}
+        </select>
+        <select style={{ ...S.select, flex:1, minWidth:140 }} value={filter.status} onChange={e=>setF("status",e.target.value)}>
+          <option value="">Todos los estados</option>
+          <option value="pending">Pendientes</option>
+          <option value="paid">Pagados</option>
+        </select>
+      </div>
+
+      {filtered.length===0 && (
+        <div style={{ ...S.card, padding:48, textAlign:"center" }}>
+          <span style={{ fontSize:40 }}>📋</span>
+          <p style={{ color:"#6b7280", marginTop:12 }}>No hay gastos{filter.search||filter.group||filter.status ? " con esos filtros":""}</p>
+        </div>
+      )}
+      {filtered.map(e => (
+        <ExpenseRow key={e.id} expense={e}
+          onEdit={()   => setModal({ type:"expense", item:e })}
+          onPay={()    => setModal({ type:"payPending", expense:e })}
+          onDelete={()  => setModal({ type:"deleteConfirm", expense:e })}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ExpenseRow({ expense:e, compact, onEdit, onPay, onDelete }) {
+  const c = GROUP_COLORS[e.grupo] || GROUP_COLORS.Familiares;
+  return (
+    <div style={{ ...S.card, borderLeft:`3px solid ${c.accent}`, padding:"12px 16px", display:"flex", gap:12, alignItems:"flex-start", flexWrap:"wrap" }}>
+      <div style={{ flex:1, minWidth:180 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+          <span style={{ color:"#e5e7eb", fontWeight:600 }}>{e.service}</span>
+          <span style={{ ...S.badge, background:c.accent+"22", color:c.accent }}>{e.type}</span>
+          <span style={{ ...S.badge, background:e.status==="pending"?"#fb923c22":"#4ade8022", color:e.status==="pending"?"#fb923c":"#4ade80" }}>
+            {e.status==="pending"?"Pendiente":"Pagado"}
+          </span>
+          {e.grupo && <span style={{ ...S.badge, background:"#ffffff0d", color:"#6b7280" }}>{GROUP_ICONS[e.grupo]} {e.grupo}</span>}
+        </div>
+        <div style={{ display:"flex", gap:14, marginTop:4, flexWrap:"wrap" }}>
+          <span style={{ color:"#6b7280", fontSize:12 }}>📅 {fmtDate(e.date)}</span>
+          {e.entity_name && <span style={{ color:"#6b7280", fontSize:12 }}>📍 {e.entity_name}</span>}
+          {e.notes && <span style={{ color:"#4b5563", fontSize:12 }}>💬 {e.notes}</span>}
+        </div>
+      </div>
+      <div style={{ textAlign:"right" }}>
+        <p style={{ color:c.accent, fontWeight:700, fontSize:16 }}>{fmt(e.paid_amount??e.amount)}</p>
+        {!compact && (
+          <div style={{ display:"flex", gap:6, marginTop:8, justifyContent:"flex-end" }}>
+            {e.status==="pending" && <button style={S.btnSuccess} onClick={onPay}>Pagar</button>}
+            <button style={S.btnOutline} onClick={onEdit}>Editar</button>
+            <button style={S.btnDanger}  onClick={onDelete}>✕</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+function Reports({ data }) {
+  const [filter, setFilter] = useState({ group:"", status:"", from:"", to:"" });
+  const setF = (k,v) => setFilter(f => ({...f,[k]:v}));
+
+  const filtered = data.expenses.filter(e => {
+    if (filter.group  && e.grupo  !==filter.group)  return false;
+    if (filter.status && e.status !==filter.status) return false;
+    if (filter.from   && e.date   < filter.from)    return false;
+    if (filter.to     && e.date   > filter.to)      return false;
+    return true;
+  });
+
+  const total   = filtered.reduce((s,e)=>s+parseFloat(e.paid_amount??e.amount),0);
+  const byGroup = filtered.reduce((a,e)=>{ a[e.grupo]=(a[e.grupo]||0)+parseFloat(e.paid_amount??e.amount); return a; },{});
+  const byType  = filtered.reduce((a,e)=>{ a[e.type] =(a[e.type] ||0)+parseFloat(e.paid_amount??e.amount); return a; },{});
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+      {/* Filters */}
+      <div style={{ ...S.card, padding:20 }}>
+        <p style={{ color:"#e5e7eb", fontWeight:600, marginBottom:14 }}>Filtros</p>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:10 }}>
+          {[
+            { label:"Grupo", el:<select style={S.select} value={filter.group} onChange={e=>setF("group",e.target.value)}><option value="">Todos</option>{["Propiedades","Vehículos","Familiares"].map(g=><option key={g}>{g}</option>)}</select> },
+            { label:"Estado", el:<select style={S.select} value={filter.status} onChange={e=>setF("status",e.target.value)}><option value="">Todos</option><option value="pending">Pendientes</option><option value="paid">Pagados</option></select> },
+            { label:"Desde", el:<input type="date" style={S.input} value={filter.from} onChange={e=>setF("from",e.target.value)}/> },
+            { label:"Hasta", el:<input type="date" style={S.input} value={filter.to}   onChange={e=>setF("to",e.target.value)}/> },
+          ].map(f => <div key={f.label}><label style={S.label}>{f.label}</label>{f.el}</div>)}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div style={{ ...S.card, padding:20, display:"flex", gap:24, flexWrap:"wrap" }}>
+        <div style={{ minWidth:140 }}>
+          <p style={{ color:"#6b7280", fontSize:12 }}>Total filtrado</p>
+          <p style={{ color:"#4ade80", fontSize:30, fontWeight:800, margin:"6px 0 2px" }}>{fmt(total)}</p>
+          <p style={{ color:"#4b5563", fontSize:12 }}>{filtered.length} gastos</p>
+        </div>
+        <div style={{ flex:1, minWidth:220 }}>
+          <p style={{ color:"#6b7280", fontSize:12, marginBottom:10 }}>Por grupo</p>
+          {Object.entries(byGroup).map(([g,v]) => {
+            const c = GROUP_COLORS[g]; const p = total?(v/total*100).toFixed(1):0;
+            return (
+              <div key={g} style={{ marginBottom:8 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                  <span style={{ color:"#d1d5db", fontSize:13 }}>{GROUP_ICONS[g]} {g}</span>
+                  <span style={{ color:c?.accent, fontSize:13, fontWeight:600 }}>{fmt(v)} ({p}%)</span>
+                </div>
+                <div style={S.progressTrack}><div style={{ ...S.progressBar, width:`${p}%`, background:c?.accent }}/></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* By type */}
+      {Object.keys(byType).length>0 && (
+        <div style={{ ...S.card, padding:20 }}>
+          <p style={{ color:"#e5e7eb", fontWeight:600, marginBottom:14 }}>Por tipo de gasto</p>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:8 }}>
+            {Object.entries(byType).sort((a,b)=>b[1]-a[1]).map(([t,v]) => (
+              <div key={t} style={{ background:"#1f2937", borderRadius:10, padding:"12px 14px" }}>
+                <p style={{ color:"#9ca3af", fontSize:12 }}>{t}</p>
+                <p style={{ color:"#e5e7eb", fontWeight:700, marginTop:4 }}>{fmt(v)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {filtered.length===0
+        ? <div style={{ ...S.card, padding:48, textAlign:"center" }}><span style={{fontSize:40}}>📊</span><p style={{color:"#6b7280",marginTop:12}}>Sin resultados</p></div>
+        : <div style={{ ...S.card, padding:20 }}>
+            <p style={{ color:"#e5e7eb", fontWeight:600, marginBottom:14 }}>Detalle ({filtered.length})</p>
+            {filtered.map(e => <ExpenseRow key={e.id} expense={e} compact/>)}
+          </div>
+      }
+    </div>
+  );
+}
+
+// ── Modals ────────────────────────────────────────────────────────────────────
+function Modal({ title, children, close, wide }) {
+  return (
+    <div style={S.overlay} onClick={ev => { if(ev.target===ev.currentTarget) close(); }}>
+      <div style={{ ...S.modalBox, maxWidth:wide?540:440 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"18px 22px", borderBottom:"1px solid #1f2937" }}>
+          <h2 style={{ color:"#e5e7eb", fontWeight:700, fontSize:17 }}>{title}</h2>
+          <button style={{ background:"none", border:"none", color:"#6b7280", cursor:"pointer", fontSize:18, padding:2 }} onClick={close}>✕</button>
+        </div>
+        <div style={{ padding:"20px 22px", overflowY:"auto" }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children, wide }) {
+  return (
+    <div style={{ gridColumn:wide?"1 / -1":undefined }}>
+      <label style={S.label}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function BudgetModal({ data, reload, close, showToast }) {
+  const now = new Date();
+  const [form, setForm] = useState({ total:"", year:now.getFullYear(), month:now.getMonth()+1 });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const handle = async () => {
+    if (!form.total || isNaN(+form.total)) return;
+    setSaving(true);
+    const existing = data.budgets.find(b => b.year===+form.year && b.month===+form.month);
+    let error;
+    if (existing) {
+      ({ error } = await db.from("budgets").update({ total:+form.total }).eq("id",existing.id));
+    } else {
+      ({ error } = await db.from("budgets").insert({ total:+form.total, year:+form.year, month:+form.month }));
+    }
+    setSaving(false);
+    if (error) { showToast("Error al guardar",false); return; }
+    await reload("budgets");
+    showToast("Presupuesto guardado ✓");
+    close();
+  };
+
+  return (
+    <Modal title="Registrar Presupuesto" close={close}>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <Field label="Importe total"><input style={S.input} type="number" min="0" value={form.total} onChange={e=>set("total",e.target.value)} placeholder="0"/></Field>
+        <Field label="Año"><input style={S.input} type="number" value={form.year} onChange={e=>set("year",e.target.value)}/></Field>
+        <Field label="Mes">
+          <select style={S.select} value={form.month} onChange={e=>set("month",+e.target.value)}>
+            {MONTHS.map((m,i) => <option key={i} value={i+1}>{m}</option>)}
+          </select>
+        </Field>
+        <button style={{ ...S.btnPrimary, marginTop:6 }} onClick={handle} disabled={saving}>
+          {saving ? "Guardando..." : "Guardar presupuesto"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function EntityModal({ type, reload, close, showToast, item }) {
+  const [form, setForm] = useState({ name:item?.name||"", description:item?.description||"" });
+  const [saving, setSaving] = useState(false);
+  const label = type==="properties" ? "Propiedad" : "Vehículo";
+
+  const handle = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    let error;
+    if (item) {
+      ({ error } = await db.from(type).update(form).eq("id",item.id));
+    } else {
+      ({ error } = await db.from(type).insert(form));
+    }
+    setSaving(false);
+    if (error) { showToast("Error al guardar",false); return; }
+    await reload(type);
+    showToast(`${label} guardado ✓`);
+    close();
+  };
+
+  return (
+    <Modal title={`${item?"Editar":"Nueva"} ${label}`} close={close}>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <Field label="Nombre"><input style={S.input} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder={`Nombre de la ${label.toLowerCase()}`}/></Field>
+        <Field label="Descripción (opcional)"><input style={S.input} value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))} placeholder="Dirección, patente, etc."/></Field>
+        <button style={{ ...S.btnPrimary, marginTop:6 }} onClick={handle} disabled={saving}>
+          {saving ? "Guardando..." : "Guardar"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function ExpenseModal({ data, reload, close, showToast, item }) {
+  const [step, setStep]   = useState("form");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm]   = useState({
+    group:       item?.grupo      || "Propiedades",
+    entity_id:   item?.entity_id  || "",
+    entity_name: item?.entity_name|| "",
+    type:        item?.type       || "",
+    service:     item?.service    || "",
+    amount:      item?.amount     || "",
+    date:        item?.date       || today(),
+    notes:       item?.notes      || "",
+    status:      item?.status     || "pending",
+  });
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const entities = form.group==="Propiedades" ? data.properties : form.group==="Vehículos" ? data.vehicles : [];
+
+  const handleSave = async (status) => {
+    setSaving(true);
+    const payload = {
+      grupo:       form.group,
+      entity_id:   form.entity_id   || null,
+      entity_name: form.entity_name || null,
+      type:        form.type,
+      service:     form.service,
+      amount:      parseFloat(form.amount),
+      date:        form.date,
+      notes:       form.notes || null,
+      status,
+      paid_amount: status==="paid" ? parseFloat(form.amount) : null,
+      paid_date:   status==="paid" ? form.date : null,
+    };
+    let error;
+    if (item) {
+      ({ error } = await db.from("expenses").update(payload).eq("id",item.id));
+    } else {
+      ({ error } = await db.from("expenses").insert(payload));
+    }
+    setSaving(false);
+    if (error) { showToast("Error al guardar",false); return; }
+    await reload("expenses");
+    showToast("Gasto guardado ✓");
+    close();
+  };
+
+  if (step==="confirm") {
+    return (
+      <Modal title="¿Cómo registrar el gasto?" close={close}>
+        <p style={{ color:"#9ca3af", marginBottom:8 }}>
+          <strong style={{color:"#e5e7eb"}}>{form.service}</strong> — {fmt(form.amount)}
+        </p>
+        <p style={{ color:"#6b7280", fontSize:14, marginBottom:24 }}>¿Registrar como pendiente o pagado?</p>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <button style={{ ...S.btnWarning, padding:"14px 0" }} onClick={()=>handleSave("pending")} disabled={saving}>
+            🕐 Dejar Pendiente
+          </button>
+          <button style={{ ...S.btnSuccess, padding:"14px 0" }} onClick={()=>handleSave("paid")} disabled={saving}>
+            ✓ Registrar Pagado
+          </button>
+        </div>
+        <button style={{ ...S.btnOutline, width:"100%", marginTop:10 }} onClick={()=>setStep("form")}>← Volver</button>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title={item?"Editar Gasto":"Nuevo Gasto"} close={close} wide>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+        <Field label="Grupo" wide>
+          <select style={S.select} value={form.group} onChange={e=>{ set("group",e.target.value); set("entity_id",""); set("entity_name",""); set("type",""); }}>
+            {["Propiedades","Vehículos","Familiares"].map(g=><option key={g}>{g}</option>)}
+          </select>
+        </Field>
+
+        {entities.length>0 && (
+          <Field label={form.group==="Propiedades"?"Propiedad":"Vehículo"} wide>
+            <select style={S.select} value={form.entity_id}
+              onChange={e=>{ const ent=entities.find(x=>x.id===e.target.value); set("entity_id",e.target.value); set("entity_name",ent?.name||""); }}>
+              <option value="">Sin especificar</option>
+              {entities.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </Field>
+        )}
+
+        <Field label="Tipo de gasto" wide>
+          <select style={S.select} value={form.type} onChange={e=>set("type",e.target.value)}>
+            <option value="">Seleccionar tipo...</option>
+            {(EXPENSE_TYPES[form.group]||[]).map(t=><option key={t}>{t}</option>)}
+          </select>
+        </Field>
+
+        <Field label="Servicio / Empresa">
+          <input style={S.input} maxLength={30} value={form.service} onChange={e=>set("service",e.target.value)} placeholder="Máx. 30 caracteres"/>
+        </Field>
+
+        <Field label="Importe">
+          <input style={S.input} type="number" min="0" step="0.01" value={form.amount} onChange={e=>set("amount",e.target.value)}/>
+        </Field>
+
+        <Field label="Fecha">
+          <input style={S.input} type="date" value={form.date} onChange={e=>set("date",e.target.value)}/>
+        </Field>
+
+        {item && (
+          <Field label="Estado">
+            <select style={S.select} value={form.status} onChange={e=>set("status",e.target.value)}>
+              <option value="pending">Pendiente</option>
+              <option value="paid">Pagado</option>
+            </select>
+          </Field>
+        )}
+
+        <Field label={`Observaciones (${form.notes.length}/140)`} wide>
+          <textarea style={{ ...S.input, height:68, resize:"vertical" }} maxLength={140}
+            value={form.notes} onChange={e=>set("notes",e.target.value)} placeholder="Opcional..."/>
+        </Field>
+      </div>
+
+      <button
+        style={{ ...S.btnPrimary, width:"100%", marginTop:16 }}
+        onClick={() => { if (!form.service.trim()||!form.amount) return; item ? handleSave(form.status) : setStep("confirm"); }}
+        disabled={saving}>
+        {saving ? "Guardando..." : item ? "Guardar cambios" : "Continuar →"}
+      </button>
+    </Modal>
+  );
+}
+
+function PayPendingModal({ expense, reload, close, showToast }) {
+  const [form, setForm] = useState({ date:today(), amount:expense.amount });
+  const [saving, setSaving] = useState(false);
+
+  const handle = async () => {
+    setSaving(true);
+    const { error } = await db.from("expenses").update({
+      status: "paid",
+      paid_date:   form.date,
+      paid_amount: parseFloat(form.amount),
+    }).eq("id", expense.id);
+    setSaving(false);
+    if (error) { showToast("Error al registrar pago",false); return; }
+    await reload("expenses");
+    showToast("Pago registrado ✓");
+    close();
+  };
+
+  return (
+    <Modal title={`Pagar: ${expense.service}`} close={close}>
+      <p style={{ color:"#6b7280", fontSize:14, marginBottom:18 }}>
+        Podés modificar la fecha y el importe antes de confirmar el pago.
+      </p>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <Field label="Fecha de pago"><input style={S.input} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></Field>
+        <Field label="Importe pagado"><input style={S.input} type="number" min="0" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))}/></Field>
+        <button style={{ ...S.btnSuccess, marginTop:4 }} onClick={handle} disabled={saving}>
+          {saving ? "Registrando..." : "✓ Confirmar pago"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function DeleteConfirmModal({ expense, reload, close, showToast }) {
+  const [saving, setSaving] = useState(false);
+
+  const handle = async () => {
+    setSaving(true);
+    const { error } = await db.from("expenses").delete().eq("id",expense.id);
+    setSaving(false);
+    if (error) { showToast("Error al eliminar",false); return; }
+    await reload("expenses");
+    showToast("Gasto eliminado");
+    close();
+  };
+
+  return (
+    <Modal title="Eliminar gasto" close={close}>
+      <p style={{ color:"#d1d5db", marginBottom:24 }}>
+        ¿Confirma que desea eliminar <strong style={{color:"#e5e7eb"}}>{expense.service}</strong> ({fmt(expense.amount)})?
+      </p>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+        <button style={S.btnOutline} onClick={close}>Cancelar</button>
+        <button style={{ ...S.btnDanger, padding:"10px 0" }} onClick={handle} disabled={saving}>
+          {saving ? "Eliminando..." : "Eliminar"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+// ── render ─────────────────────────────────────────────────────────────────────
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
