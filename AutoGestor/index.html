@@ -485,7 +485,8 @@ if ('serviceWorker' in navigator) {
   </div>
   <!-- NAV DESKTOP -->
   <nav class="nav nav-desktop">
-    <button class="nav-btn active" onclick="showSection('gastos')" id="nav-gastos">💳 Nuevo Gasto</button>
+    <button class="nav-btn active" onclick="showSection('inicio')" id="nav-inicio">🏠 Inicio</button>
+    <button class="nav-btn" onclick="showSection('gastos')" id="nav-gastos">💳 Nuevo Gasto</button>
     <button class="nav-btn" onclick="showSection('ingresos')" id="nav-ingresos">💰 Ingresos</button>
     <button class="nav-btn" onclick="showSection('reportes')" id="nav-reportes">📊 Reportes</button>
     <button class="nav-btn" onclick="showSection('utilidades')" id="nav-utilidades">📈 Utilidades</button>
@@ -513,7 +514,8 @@ if ('serviceWorker' in navigator) {
 
   <!-- DROPDOWN MENU MOBILE -->
   <div class="hamburger-menu" id="hamburger-menu">
-    <button class="ham-btn active" onclick="showSection('gastos');closeMenu()" id="hav-gastos">💳 Nuevo Gasto</button>
+    <button class="ham-btn active" onclick="showSection('inicio');closeMenu()" id="hav-inicio">🏠 Inicio</button>
+    <button class="ham-btn" onclick="showSection('gastos');closeMenu()" id="hav-gastos">💳 Nuevo Gasto</button>
     <button class="ham-btn" onclick="showSection('ingresos');closeMenu()" id="hav-ingresos">💰 Ingresos</button>
     <button class="ham-btn" onclick="showSection('reportes');closeMenu()" id="hav-reportes">📊 Reportes</button>
     <button class="ham-btn" onclick="showSection('utilidades');closeMenu()" id="hav-utilidades">📈 Utilidades</button>
@@ -529,8 +531,15 @@ if ('serviceWorker' in navigator) {
 
 <main class="main">
 
+  <!-- ════════════════════════ INICIO / DASHBOARD ════════════════════════ -->
+  <section id="sec-inicio" class="section visible">
+    <div class="page-title">🏠 <span>Dashboard</span></div>
+    <p class="page-desc" id="dash-periodo"></p>
+    <div id="dashboard-content"></div>
+  </section>
+
   <!-- ════════════════════════════ 1. NUEVO GASTO ════════════════════════════ -->
-  <section id="sec-gastos" class="section visible">
+  <section id="sec-gastos" class="section">
     <div class="page-title">💳 Nuevo <span>Gasto</span></div>
     <p class="page-desc">Registrá un nuevo gasto vehicular con todos sus detalles.</p>
 
@@ -1426,7 +1435,7 @@ function showAlert(id, msg, type='success', dur=4000) {
 //  NAVIGATION
 // ══════════════════════════════════════════════════════════════════
 function showSection(id) {
-  ['gastos','reportes','km','mant','ingresos','utilidades','vencimientos','admin'].forEach(s => {
+  ['inicio','gastos','reportes','km','mant','ingresos','utilidades','vencimientos','admin'].forEach(s => {
     const sec = document.getElementById('sec-'+s);
     const nav = document.getElementById('nav-'+s);
     if(sec) sec.classList.toggle('visible', s===id);
@@ -1434,6 +1443,7 @@ function showSection(id) {
     const hav = document.getElementById('hav-'+s);
     if(hav) hav.classList.toggle('active', s===id);
   });
+  if(id==='inicio') { renderDashboard(); }
   if(id==='reportes') { aplicarFiltros(); }
   if(id==='mant') { renderMant(); }
   if(id==='km') { renderHistKm(); mostrarUltimoKm(); renderAceiteEstadoPanel(); }
@@ -1712,7 +1722,9 @@ async function guardarKm() {
   document.getElementById('km-valor').value = '';
   mostrarUltimoKm();
   renderHistKm();
-  renderAceiteEstadoPanel(); // actualizar semáforo
+  renderAceiteEstadoPanel();
+  renderDashboard();
+  showSection('inicio'); // actualizar semáforo
 }
 
 function getUltimoKm(vehiculo) {
@@ -1756,6 +1768,8 @@ function eliminarKm(id) {
     renderHistKm();
     mostrarUltimoKm();
     renderAceiteEstadoPanel();
+  renderDashboard();
+  showSection('inicio');
   });
 }
 
@@ -1791,6 +1805,8 @@ async function guardarAceite() {
   document.getElementById('aceite-comentario').value = '';
   showAlert('km-alert','Próximo cambio de aceite guardado.','success');
   renderAceiteEstadoPanel();
+  renderDashboard();
+  showSection('inicio');
 }
 
 function renderAceiteEstadoPanel() {
@@ -1971,6 +1987,8 @@ async function initApp() {
   renderHistIngresos();
   renderVencimientos();
   renderAceiteEstadoPanel();
+  renderDashboard();
+  showSection('inicio');
   // Show admin buttons if admin
   if (currentUser.rol === 'admin') {
     const na = document.getElementById('nav-admin');
@@ -2024,6 +2042,8 @@ async function initApp() {
   renderHistIngresos();
   renderVencimientos();
   renderAceiteEstadoPanel();
+  renderDashboard();
+  showSection('inicio');
   // Default utilidades to current month
   const utilDesde = document.getElementById('util-desde');
   const utilHasta = document.getElementById('util-hasta');
@@ -2525,6 +2545,130 @@ async function eliminarUsuario(id, username) {
   }
 }
 
+
+
+// ══════════════════════════════════════════════════════════════════
+//  DASHBOARD / INICIO
+// ══════════════════════════════════════════════════════════════════
+
+function renderDashboard() {
+  const hoy   = new Date();
+  const y     = hoy.getFullYear();
+  const m     = String(hoy.getMonth()+1).padStart(2,'0');
+  const desde = `${y}-${m}-01`;
+  const hasta = `${y}-${m}-31`;
+
+  // Update period label
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const periodoEl = document.getElementById('dash-periodo');
+  if (periodoEl) periodoEl.textContent = `Período: ${meses[hoy.getMonth()]} ${y}`;
+
+  // Filter data for current month
+  const gasFilt = gastos.filter(g => g.fecha >= desde && g.fecha <= hasta);
+  const ingFilt = ingresos.filter(i => i.fecha >= desde && i.fecha <= hasta);
+
+  // Build per-vehicle data
+  const vMap = {};
+  vehiculos.forEach(v => { vMap[v] = { ing: 0, gas: 0 }; });
+  ingFilt.forEach(i => {
+    const v = i.vehiculoId || i.vehiculo;
+    if (!vMap[v]) vMap[v] = { ing: 0, gas: 0 };
+    vMap[v].ing += Number(i.importe) || 0;
+  });
+  gasFilt.forEach(g => {
+    if (!vMap[g.vehiculo]) vMap[g.vehiculo] = { ing: 0, gas: 0 };
+    vMap[g.vehiculo].gas += Number(g.importe) || 0;
+  });
+
+  const rows = Object.entries(vMap).filter(([,d]) => d.ing > 0 || d.gas > 0);
+  const totIng = rows.reduce((s,[,d]) => s + d.ing, 0);
+  const totGas = rows.reduce((s,[,d]) => s + d.gas, 0);
+  const totUtil = totIng - totGas;
+  const totRatio = totGas > 0 ? (totIng / totGas).toFixed(2) : '—';
+  const colorUtil = totUtil >= 0 ? '#1a7a3a' : '#cc1a1a';
+
+  // Aceite status
+  const aceiteConfigs = mantenimientos.filter(m => m.esAceite);
+  const aceiteCards = aceiteConfigs.length
+    ? aceiteConfigs.map(config => {
+        const ult = getUltimoKm(config.vehiculo);
+        const kmActual = ult ? (ult.valor||ult.km) : null;
+        if (kmActual === null) return `
+          <div style="background:#f0f4f8;border:1px solid #dde3ed;border-radius:10px;padding:14px">
+            <div style="font-weight:700;margin-bottom:6px">🚘 ${config.vehiculo}</div>
+            <div style="font-size:13px;color:var(--text3)">Próximo: ${fmtKm(config.kmProximo)} — Sin km registrado</div>
+          </div>`;
+        const diff = config.kmProximo - kmActual;
+        const color = diff < 0 ? '#cc1a1a' : diff <= 500 ? '#8B6000' : '#1a7a3a';
+        const bg    = diff < 0 ? '#fdecea' : diff <= 500 ? '#fff8e1' : '#e8f7ee';
+        const semaforo = diff < 0 ? '🔴' : diff <= 500 ? '🟡' : '🟢';
+        return `
+          <div style="background:${bg};border-radius:10px;padding:14px">
+            <div style="font-weight:700;margin-bottom:6px">🚘 ${config.vehiculo}</div>
+            <div style="font-size:13px;margin-bottom:4px;color:var(--text2)">Próximo cambio: <strong>${fmtKm(config.kmProximo)}</strong> | Actual: <strong>${fmtKm(kmActual)}</strong></div>
+            <div style="font-size:18px;font-weight:700;color:${color}">${semaforo} ${diff >= 0 ? fmtKm(diff)+' restantes' : fmtKm(Math.abs(diff))+' vencido'}</div>
+          </div>`;
+      }).join('')
+    : '<p style="color:var(--text3);font-size:13px">Sin configuración de aceite registrada.</p>';
+
+  // Per vehicle table rows
+  const vehRows = rows.length
+    ? rows.map(([v, d]) => {
+        const util = d.ing - d.gas;
+        const ratio = d.gas > 0 ? (d.ing/d.gas).toFixed(2)+'x' : '—';
+        const colorU = util >= 0 ? '#1a7a3a' : '#cc1a1a';
+        return `<tr>
+          <td><strong>🚘 ${v}</strong></td>
+          <td style="text-align:right;color:#1a7a3a;font-weight:600">${fmt(d.ing)}</td>
+          <td style="text-align:right;color:#cc1a1a;font-weight:600">${fmt(d.gas)}</td>
+          <td style="text-align:right;font-weight:700;color:${colorU}">${fmt(util)}</td>
+          <td style="text-align:right;font-weight:600">${ratio}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text3)">Sin movimientos este mes.</td></tr>';
+
+  document.getElementById('dashboard-content').innerHTML = `
+    <!-- Totales globales -->
+    <div class="stats-grid" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-label">💰 Ingresos del mes</div><div class="stat-value" style="color:#1a7a3a">${fmt(totIng)}</div></div>
+      <div class="stat-card"><div class="stat-label">💳 Gastos del mes</div><div class="stat-value" style="color:#cc1a1a">${fmt(totGas)}</div></div>
+      <div class="stat-card"><div class="stat-label">📈 Utilidad</div><div class="stat-value" style="color:${colorUtil}">${fmt(totUtil)}</div></div>
+      <div class="stat-card"><div class="stat-label">⚖️ Ratio</div><div class="stat-value">${totRatio !== '—' ? totRatio+'x' : '—'}</div></div>
+    </div>
+
+    <!-- Por vehículo -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">🚗 Detalle por Vehículo — ${meses[hoy.getMonth()]} ${y}</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Vehículo</th>
+            <th style="text-align:right">Ingresos</th>
+            <th style="text-align:right">Gastos</th>
+            <th style="text-align:right">Utilidad</th>
+            <th style="text-align:right">Ratio</th>
+          </tr></thead>
+          <tbody>${vehRows}</tbody>
+          <tfoot><tr style="background:var(--bg2);font-weight:700;border-top:2px solid var(--border)">
+            <td>TOTAL</td>
+            <td style="text-align:right;color:#1a7a3a">${fmt(totIng)}</td>
+            <td style="text-align:right;color:#cc1a1a">${fmt(totGas)}</td>
+            <td style="text-align:right;color:${colorUtil}">${fmt(totUtil)}</td>
+            <td style="text-align:right">${totRatio !== '—' ? totRatio+'x' : '—'}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Semáforo aceite -->
+    <div class="card">
+      <div class="card-title">🛢️ Estado del Aceite</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+        ${aceiteCards}
+      </div>
+    </div>
+  `;
+}
 
 function exportarDatos() {
   const total = gastos.length + kmRegistros.length + mantenimientos.length + vehiculos.length;
