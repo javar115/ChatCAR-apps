@@ -178,7 +178,7 @@ function App() {
     return pagadosMes + pendAnt + pendMes;
   }, [gastosMesActual, pendientesAnteriores]);
 
-  const pct = activeBudget ? Math.min(100,(consumed/activeBudget.total)*100) : 0;
+  const pct = activeBudget ? (consumed/activeBudget.total)*100 : 0;
 
   if (loading) return <Loader/>;
   if (dbError)  return <DBError onRetry={reloadAll}/>;
@@ -352,13 +352,17 @@ function Dashboard({ data, activeBudget, consumed, pct, setView, setModal, hoy, 
           <div style={{marginTop:18}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
               <span style={{color:"#6b7280",fontSize:13}}>Comprometido: {fmt(consumed)}</span>
-              <span style={{color:pct>90?"#f87171":pct>70?"#fb923c":"#4ade80",fontWeight:700}}>{pct.toFixed(1)}%</span>
+              <span style={{color:pct>100?"#f87171":pct>90?"#f87171":pct>70?"#fb923c":"#4ade80",fontWeight:700}}>
+  		{pct>100?`⚠️ +${(pct-100).toFixed(1)}% EXCEDIDO`:`${pct.toFixed(1)}%`}
+		</span>
             </div>
             <div style={S.progressTrack}>
               <div style={{...S.progressBar,width:`${pct}%`,background:pct>90?"#f87171":pct>70?"#fb923c":"#4ade80"}}/>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",marginTop:8,flexWrap:"wrap",gap:8}}>
-              <span style={{color:"#4b5563",fontSize:12}}>Disponible: {fmt(activeBudget.total - consumed)}</span>
+              <span style={{color:pct>100?"#f87171":"#4b5563",fontSize:12}}>
+  		{pct>100?`⚠️ Excedido en ${fmt(consumed-activeBudget.total)}`:`Disponible: ${fmt(activeBudget.total-consumed)}`}
+		</span>
               {totalPendAnt > 0 && <span style={{color:"#fb923c",fontSize:12}}>⚠️ Incluye {fmt(totalPendAnt)} de meses anteriores</span>}
             </div>
           </div>
