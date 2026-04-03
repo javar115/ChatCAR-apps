@@ -69,7 +69,7 @@
   .nav-item.active .nav-label { color: var(--accent); }
   .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
 
-  /* Loading overlay */
+  /* Loading */
   .loading-overlay {
     position: absolute; inset: 0; background: rgba(255,255,255,0.9);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -79,7 +79,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 14px; color: var(--text2); }
 
-  /* Auth views */
+  /* Auth */
   .auth-bg {
     background: linear-gradient(160deg, var(--primary) 0%, #16213e 60%, #0f3460 100%);
     display: flex; flex-direction: column; align-items: center;
@@ -116,7 +116,6 @@
   .btn-secondary { background: transparent; color: rgba(255,255,255,0.6); font-size: 13px; border: none; cursor: pointer; margin-top: 10px; width: 100%; text-align: center; padding: 8px; }
   .auth-error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-top: 10px; display: none; }
 
-
   /* App header */
   .app-header { background: var(--primary); padding: 16px 20px 20px; flex-shrink: 0; }
   .app-header .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -143,13 +142,25 @@
   .stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
   .stat-val { font-size: 16px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
   .section-title { font-size: 12px; font-weight: 600; color: var(--text2); padding: 0 16px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Transaction items — con acciones swipe/tap */
   .tx-item {
     background: var(--surface); margin: 0 16px 8px;
     border-radius: 12px; padding: 12px 14px;
     display: flex; align-items: center; gap: 12px;
-    box-shadow: var(--shadow); cursor: pointer; transition: transform 0.15s;
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
   }
-  .tx-item:active { transform: scale(0.98); }
+  .tx-item .tx-actions {
+    display: flex; gap: 6px; margin-left: auto; flex-shrink: 0;
+  }
+  .tx-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; cursor: pointer; transition: transform 0.15s;
+  }
+  .tx-btn:active { transform: scale(0.88); }
+  .tx-btn.edit { background: rgba(0,212,170,0.12); color: var(--accent); }
+  .tx-btn.del  { background: rgba(239,68,68,0.10); color: var(--red); }
   .tx-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .tx-icon.income { background: rgba(16,185,129,0.12); }
   .tx-icon.expense { background: rgba(239,68,68,0.1); }
@@ -160,6 +171,16 @@
   .tx-amount { font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; white-space: nowrap; }
   .tx-amount.income { color: var(--green); }
   .tx-amount.expense { color: var(--red); }
+
+  /* Maintenance items con acciones */
+  .maint-item { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; padding: 13px 14px; box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 10px; }
+  .maint-body { flex: 1; min-width: 0; }
+  .maint-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .maint-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .maint-km { font-size: 13px; font-weight: 700; color: var(--accent); font-family: 'Space Grotesk', sans-serif; }
+  .maint-date { font-size: 11px; color: var(--text3); }
+  .maint-detail { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .maint-actions { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
 
   /* FAB */
   .fab {
@@ -189,6 +210,21 @@
   .btn-sheet { margin: 0 20px; width: calc(100% - 40px); padding: 14px; border-radius: 12px; background: var(--accent); color: #0a2e28; font-weight: 700; font-size: 15px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; box-shadow: 0 4px 12px rgba(0,212,170,0.3); transition: transform 0.15s; }
   .btn-sheet:active { transform: scale(0.97); }
   .btn-sheet:disabled { opacity: 0.6; }
+  .btn-sheet-danger { margin: 8px 20px 0; width: calc(100% - 40px); padding: 13px; border-radius: 12px; background: rgba(239,68,68,0.08); color: var(--red); font-weight: 700; font-size: 14px; border: 1.5px solid rgba(239,68,68,0.2); cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: transform 0.15s; }
+  .btn-sheet-danger:active { transform: scale(0.97); }
+
+  /* Confirm Dialog */
+  .confirm-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: var(--surface); border-radius: 20px; padding: 24px; width: 100%; max-width: 320px; box-shadow: var(--shadow-lg); }
+  .confirm-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; }
+  .confirm-msg { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btns button { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: transform 0.15s; }
+  .confirm-btns button:active { transform: scale(0.95); }
+  .btn-cancel { background: var(--surface3); color: var(--text2); }
+  .btn-confirm-danger { background: var(--red); color: white; }
+  .btn-confirm-ok { background: var(--accent); color: #0a2e28; }
 
   /* Oil */
   .oil-container { padding: 16px; }
@@ -215,14 +251,6 @@
   .oil-status-msg.red { background: rgba(239,68,68,0.1); color: var(--red); }
   .oil-status-msg.alert { background: rgba(239,68,68,0.15); color: var(--red); }
 
-  /* Maint */
-  .maint-item { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; padding: 13px 14px; box-shadow: var(--shadow); }
-  .maint-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-  .maint-title { font-size: 13px; font-weight: 600; color: var(--text); }
-  .maint-km { font-size: 13px; font-weight: 700; color: var(--accent); font-family: 'Space Grotesk', sans-serif; }
-  .maint-date { font-size: 11px; color: var(--text3); }
-  .maint-detail { font-size: 12px; color: var(--text2); margin-top: 3px; }
-
   /* Tabs */
   .tab-row { display: flex; padding: 12px 16px 0; gap: 4px; }
   .tab-btn { flex: 1; padding: 9px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
@@ -233,6 +261,41 @@
   .filter-row { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; }
   .filter-pill { white-space: nowrap; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); font-size: 12px; font-weight: 500; background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.2s; }
   .filter-pill.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* Cierre de mes banner */
+  .cierre-banner {
+    margin: 0 16px 12px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(238,90,36,0.3);
+    cursor: pointer;
+  }
+  .cierre-banner .cierre-icon { font-size: 24px; flex-shrink: 0; }
+  .cierre-banner .cierre-text { flex: 1; }
+  .cierre-banner .cierre-title { font-size: 13px; font-weight: 700; color: white; font-family: 'Space Grotesk', sans-serif; }
+  .cierre-banner .cierre-sub { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+  .cierre-banner .cierre-arrow { color: rgba(255,255,255,0.7); font-size: 18px; }
+
+  /* Historial de meses */
+  .archive-item {
+    background: var(--surface); margin: 0 16px 8px;
+    border-radius: 12px; padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .archive-month { font-size: 14px; font-weight: 700; color: var(--text); font-family: 'Space Grotesk', sans-serif; margin-bottom: 8px; }
+  .archive-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .archive-label { font-size: 12px; color: var(--text2); }
+  .archive-val { font-size: 13px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+  .archive-val.green { color: var(--green); }
+  .archive-val.red { color: var(--red); }
+  .archive-divider { height: 1px; background: var(--border); margin: 8px 0; }
+  .archive-neto { display: flex; justify-content: space-between; align-items: center; }
+  .archive-neto-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .archive-neto-val { font-size: 16px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
 
   /* Profile */
   .profile-header { background: var(--primary); padding: 24px 20px 32px; }
@@ -296,6 +359,18 @@
       <div class="loading-text">Cargando...</div>
     </div>
 
+    <!-- CONFIRM DIALOG -->
+    <div class="confirm-overlay" id="confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-title" id="confirm-title">¿Confirmar acción?</div>
+        <div class="confirm-msg" id="confirm-msg">Esta acción no se puede deshacer.</div>
+        <div class="confirm-btns">
+          <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+          <button class="btn-confirm-danger" id="confirm-ok-btn" onclick="runConfirm()">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- LOGIN -->
     <div class="view active" id="v-login">
       <div class="auth-bg">
@@ -307,14 +382,8 @@
         </div>
         <div class="auth-card">
           <h2>Iniciar sesión</h2>
-          <div class="field">
-            <label>Email</label>
-            <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email">
-          </div>
-          <div class="field">
-            <label>Contraseña</label>
-            <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
-          </div>
+          <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email"></div>
+          <div class="field"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
           <div class="auth-error" id="login-error"></div>
           <button class="btn-primary" id="btn-login" onclick="doLogin()">Ingresar</button>
           <button class="btn-secondary" onclick="showView('v-register')">¿No tenés cuenta? Registrate</button>
@@ -345,8 +414,6 @@
       </div>
     </div>
 
-
-
     <!-- DASHBOARD -->
     <div class="view" id="v-dashboard">
       <div class="app-header">
@@ -360,6 +427,8 @@
         <div id="vehicle-pills"></div>
       </div>
       <div style="height:14px;"></div>
+      <!-- Banner cierre de mes -->
+      <div id="cierre-banner-container"></div>
       <div class="card" style="background:linear-gradient(135deg,#00d4aa,#00b894);margin-bottom:8px;">
         <div class="card-label" style="color:rgba(255,255,255,0.7);">Resultado neto del mes</div>
         <div class="card-value" id="dash-neto" style="color:white;font-size:26px;margin:5px 0;">$0</div>
@@ -419,6 +488,22 @@
       <div class="oil-container" id="oil-container"></div>
     </div>
 
+    <!-- HISTORIAL DE MESES -->
+    <div class="view" id="v-historial">
+      <div class="app-header">
+        <div class="top-row">
+          <div>
+            <button onclick="switchNav('dashboard')" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:22px;cursor:pointer;padding:0 8px 0 0;">‹</button>
+          </div>
+          <h2>Historial de meses</h2>
+          <div style="width:40px;"></div>
+        </div>
+      </div>
+      <div style="height:12px;"></div>
+      <div id="historial-list"></div>
+      <div class="scroll-pad"></div>
+    </div>
+
     <!-- PERFIL -->
     <div class="view" id="v-perfil">
       <div class="profile-header">
@@ -431,6 +516,11 @@
         <div class="profile-item" onclick="showView('v-vehiculos');renderVehicles()">
           <div class="profile-item-icon">🚗</div>
           <div class="profile-item-text">Mis vehículos</div>
+          <div class="profile-item-arrow">›</div>
+        </div>
+        <div class="profile-item" onclick="showView('v-historial');renderHistorial()">
+          <div class="profile-item-icon">📅</div>
+          <div class="profile-item-text">Historial de meses</div>
           <div class="profile-item-arrow">›</div>
         </div>
         <div class="profile-item">
@@ -485,7 +575,7 @@
     </button>
   </div>
 
-  <!-- SHEET: TRANSACCION -->
+  <!-- SHEET: TRANSACCION (crear / editar) -->
   <div class="sheet-overlay" id="sheet-tx" onclick="closeSheet('tx')">
     <div class="sheet" onclick="event.stopPropagation()">
       <div class="sheet-handle"></div>
@@ -497,22 +587,26 @@
       <div class="form-field"><label class="form-label">Vehículo</label><select class="form-select" id="tx-vehicle"></select></div>
       <div class="form-field"><label class="form-label">Categoría</label><select class="form-select" id="tx-cat"></select></div>
       <div class="form-field"><label class="form-label">Detalle (máx. 140 caracteres)</label><input type="text" class="form-input" id="tx-detalle" maxlength="140" placeholder="Descripción opcional..."></div>
+      <input type="hidden" id="tx-edit-id">
       <button class="btn-sheet" id="btn-save-tx" onclick="saveTx()">Guardar</button>
+      <button class="btn-sheet-danger" id="btn-delete-tx" style="display:none;" onclick="deleteTxFromSheet()">🗑 Eliminar registro</button>
     </div>
   </div>
 
-  <!-- SHEET: MANTENIMIENTO -->
+  <!-- SHEET: MANTENIMIENTO (crear / editar) -->
   <div class="sheet-overlay" id="sheet-maint" onclick="closeSheet('maint')">
     <div class="sheet" onclick="event.stopPropagation()">
       <div class="sheet-handle"></div>
-      <div class="sheet-title">Nuevo mantenimiento</div>
+      <div class="sheet-title" id="sheet-maint-title">Nuevo mantenimiento</div>
       <div class="form-row">
         <div class="form-field"><label class="form-label">Fecha</label><input type="date" class="form-input" id="maint-fecha"></div>
         <div class="form-field"><label class="form-label">Km actuales</label><input type="number" class="form-input" id="maint-km" placeholder="85000" inputmode="numeric"></div>
       </div>
       <div class="form-field"><label class="form-label">Vehículo</label><select class="form-select" id="maint-vehicle"></select></div>
       <div class="form-field"><label class="form-label">Detalle (máx. 140 caracteres)</label><input type="text" class="form-input" id="maint-detalle" maxlength="140" placeholder="Cambio de aceite, filtros..."></div>
+      <input type="hidden" id="maint-edit-id">
       <button class="btn-sheet" id="btn-save-maint" onclick="saveMaint()">Guardar</button>
+      <button class="btn-sheet-danger" id="btn-delete-maint" style="display:none;" onclick="deleteMaintFromSheet()">🗑 Eliminar registro</button>
     </div>
   </div>
 
@@ -535,6 +629,41 @@
       <button class="btn-sheet" id="btn-save-veh" onclick="saveVehicle()">Agregar vehículo</button>
     </div>
   </div>
+
+  <!-- SHEET: CIERRE DE MES -->
+  <div class="sheet-overlay" id="sheet-cierre" onclick="closeSheet('cierre')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">📅 Cierre de mes</div>
+      <div style="padding:0 20px 20px;">
+        <div style="background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px;">Resumen del mes actual</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;color:var(--text2);">Ingresos</span>
+            <span style="font-size:14px;font-weight:700;color:var(--green);font-family:'Space Grotesk',sans-serif;" id="cierre-ing">$0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:13px;color:var(--text2);">Gastos</span>
+            <span style="font-size:14px;font-weight:700;color:var(--red);font-family:'Space Grotesk',sans-serif;" id="cierre-gast">$0</span>
+          </div>
+          <div style="height:1px;background:var(--border);margin:8px 0;"></div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;font-weight:600;color:var(--text);">Resultado neto</span>
+            <span style="font-size:16px;font-weight:700;font-family:'Space Grotesk',sans-serif;" id="cierre-neto">$0</span>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:18px;">
+          Al cerrar el mes, los <strong>totales se archivarán</strong> en el historial y los registros de ingresos y gastos se <strong>pondrán en cero</strong> para el mes nuevo.
+        </div>
+        <div class="form-field" style="margin:0 0 16px;">
+          <label class="form-label">Nombre del período (opcional)</label>
+          <input type="text" class="form-input" id="cierre-label" placeholder="Ej: Enero 2025">
+        </div>
+        <button class="btn-sheet" onclick="confirmarCierre()">✅ Cerrar mes y archivar</button>
+        <button class="btn-sheet-danger" style="margin-top:8px;" onclick="closeSheet('cierre')">Cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- FIREBASE SDK -->
@@ -543,7 +672,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-// ── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+// ── FIREBASE CONFIG ────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCPKuTcPxXh7MF64khKCL7qTFilHlqq-CA",
   authDomain: "autorentable-a12b4.firebaseapp.com",
@@ -558,63 +687,86 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ── STATE ────────────────────────────────────────────────────────────────────
+// ── STATE ──────────────────────────────────────────────────────────────────
 let currentUser = null;
 let userProfile = null;
 let vehicles = [];
 let transactions = [];
 let maintenances = [];
+let monthArchives = [];   // ← historial de meses cerrados
 let oilData = {};
 let selectedVehicleId = null;
 let txTab = 'ingresos';
+
+// Estado del confirm dialog
+let confirmCallback = null;
 
 const incomeCategories = ['Uber','Didi','Cabify','Taxi','Remis','Otros'];
 const expenseCategories = ['Combustible','Servicios','Repuestos','Seguros','Patentes','Otros'];
 const catEmoji = { 'Uber':'🟣','Didi':'🟠','Cabify':'🟢','Taxi':'🚖','Remis':'🚙','Otros':'💼','Combustible':'⛽','Servicios':'🔌','Repuestos':'🔩','Seguros':'🛡️','Patentes':'📋' };
 
-// ── CLOCK ─────────────────────────────────────────────────────────────────────
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ── CLOCK ──────────────────────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
   document.getElementById('clock').textContent = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
 }
 updateClock(); setInterval(updateClock, 10000);
 
-// ── LOADING ───────────────────────────────────────────────────────────────────
+// ── LOADING ────────────────────────────────────────────────────────────────
 function showLoading(v) { document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none'; }
 
-// ── AUTH STATE ────────────────────────────────────────────────────────────────
+// ── CONFIRM DIALOG ─────────────────────────────────────────────────────────
+window.openConfirm = function(title, msg, okLabel, okClass, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.textContent = okLabel || 'Confirmar';
+  btn.className = okClass || 'btn-confirm-danger';
+  confirmCallback = cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+};
+window.closeConfirm = function() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  confirmCallback = null;
+};
+window.runConfirm = function() {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+};
+
+// ── AUTH STATE ─────────────────────────────────────────────────────────────
 onAuthStateChanged(auth, async (user) => {
   showLoading(true);
   if (user) {
     currentUser = user;
     const profileSnap = await getDoc(doc(db, 'users', user.uid));
-    if (profileSnap.exists()) {
-      userProfile = profileSnap.data();
-    }
+    if (profileSnap.exists()) userProfile = profileSnap.data();
     await loadAllData();
     enterApp();
   } else {
-    currentUser = null;
-    userProfile = null;
+    currentUser = null; userProfile = null;
     showLoading(false);
     showView('v-login');
     document.getElementById('bottom-nav').style.display = 'none';
   }
 });
 
-// ── LOAD DATA ─────────────────────────────────────────────────────────────────
+// ── LOAD DATA ──────────────────────────────────────────────────────────────
 async function loadAllData() {
   const uid = currentUser.uid;
-  const [vSnap, tSnap, mSnap] = await Promise.all([
+  const [vSnap, tSnap, mSnap, aSnap] = await Promise.all([
     getDocs(query(collection(db,'vehicles'), where('userId','==',uid))),
     getDocs(query(collection(db,'transactions'), where('userId','==',uid))),
-    getDocs(query(collection(db,'maintenances'), where('userId','==',uid)))
+    getDocs(query(collection(db,'maintenances'), where('userId','==',uid))),
+    getDocs(query(collection(db,'month_archives'), where('userId','==',uid)))
   ]);
   vehicles = vSnap.docs.map(d => ({id:d.id,...d.data()}));
   transactions = tSnap.docs.map(d => ({id:d.id,...d.data()})).sort((a,b) => b.fecha > a.fecha ? 1 : -1);
   maintenances = mSnap.docs.map(d => ({id:d.id,...d.data()})).sort((a,b) => b.fecha > a.fecha ? 1 : -1);
+  monthArchives = aSnap.docs.map(d => ({id:d.id,...d.data()})).sort((a,b) => b.closedAt > a.closedAt ? 1 : -1);
 
-  // Load oil data
   oilData = {};
   for (const v of vehicles) {
     const oSnap = await getDoc(doc(db,'oil_data',`${uid}_${v.id}`));
@@ -622,7 +774,7 @@ async function loadAllData() {
   }
 }
 
-// ── ENTER APP ─────────────────────────────────────────────────────────────────
+// ── ENTER APP ──────────────────────────────────────────────────────────────
 function enterApp() {
   showLoading(false);
   document.getElementById('bottom-nav').style.display = 'flex';
@@ -638,7 +790,7 @@ function enterApp() {
   switchNav('dashboard');
 }
 
-// ── AUTH ACTIONS ──────────────────────────────────────────────────────────────
+// ── AUTH ACTIONS ───────────────────────────────────────────────────────────
 window.doLogin = async function() {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-pass').value;
@@ -683,10 +835,10 @@ window.doRegister = async function() {
 
 window.doLogout = async function() {
   await signOut(auth);
-  vehicles = []; transactions = []; maintenances = []; oilData = {};
+  vehicles = []; transactions = []; maintenances = []; oilData = {}; monthArchives = [];
 };
 
-// ── NAVIGATION ────────────────────────────────────────────────────────────────
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
 window.showView = function(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -713,37 +865,61 @@ window.switchNav = function(tab) {
   if (tab === 'aceite') renderOil();
 };
 
-// ── SHEETS ────────────────────────────────────────────────────────────────────
-window.openSheet = function(type) {
+// ── SHEETS ─────────────────────────────────────────────────────────────────
+window.openSheet = function(type, editId) {
   const today = new Date().toISOString().split('T')[0];
   if (type === 'tx') {
-    const isInc = txTab === 'ingresos';
-    document.getElementById('sheet-tx-title').textContent = isInc ? 'Nuevo ingreso' : 'Nuevo gasto';
-    document.getElementById('btn-save-tx').textContent = isInc ? 'Guardar ingreso' : 'Guardar gasto';
-    document.getElementById('tx-fecha').value = today;
-    document.getElementById('tx-importe').value = '';
-    document.getElementById('tx-detalle').value = '';
-    document.getElementById('tx-cat').innerHTML = (isInc ? incomeCategories : expenseCategories).map(c=>`<option>${c}</option>`).join('');
-    document.getElementById('tx-vehicle').innerHTML = vehicles.map(v=>`<option value="${v.id}">🚗 ${v.nombre}</option>`).join('');
+    const editTx = editId ? transactions.find(t => t.id === editId) : null;
+    const isInc = editTx ? editTx.tipo === 'ingreso' : txTab === 'ingresos';
+    document.getElementById('sheet-tx-title').textContent = editTx ? (isInc ? 'Editar ingreso' : 'Editar gasto') : (isInc ? 'Nuevo ingreso' : 'Nuevo gasto');
+    document.getElementById('btn-save-tx').textContent = editTx ? 'Guardar cambios' : (isInc ? 'Guardar ingreso' : 'Guardar gasto');
+    document.getElementById('tx-fecha').value = editTx ? editTx.fecha : today;
+    document.getElementById('tx-importe').value = editTx ? editTx.importe : '';
+    document.getElementById('tx-detalle').value = editTx ? (editTx.detalle || '') : '';
+    document.getElementById('tx-edit-id').value = editId || '';
+    const cats = isInc ? incomeCategories : expenseCategories;
+    document.getElementById('tx-cat').innerHTML = cats.map(c=>`<option${editTx&&editTx.categoria===c?' selected':''}>${c}</option>`).join('');
+    document.getElementById('tx-vehicle').innerHTML = vehicles.map(v=>`<option value="${v.id}"${editTx&&editTx.vehicleId===v.id?' selected':''}>🚗 ${v.nombre}</option>`).join('');
+    document.getElementById('btn-delete-tx').style.display = editId ? 'block' : 'none';
     document.getElementById('sheet-tx').classList.add('open');
   } else if (type === 'maint') {
-    document.getElementById('maint-fecha').value = today;
-    document.getElementById('maint-km').value = '';
-    document.getElementById('maint-detalle').value = '';
-    document.getElementById('maint-vehicle').innerHTML = vehicles.map(v=>`<option value="${v.id}">🚗 ${v.nombre}</option>`).join('');
+    const editM = editId ? maintenances.find(m => m.id === editId) : null;
+    document.getElementById('sheet-maint-title').textContent = editM ? 'Editar mantenimiento' : 'Nuevo mantenimiento';
+    document.getElementById('btn-save-maint').textContent = editM ? 'Guardar cambios' : 'Guardar';
+    document.getElementById('maint-fecha').value = editM ? editM.fecha : today;
+    document.getElementById('maint-km').value = editM ? editM.km : '';
+    document.getElementById('maint-detalle').value = editM ? (editM.detalle || '') : '';
+    document.getElementById('maint-edit-id').value = editId || '';
+    document.getElementById('maint-vehicle').innerHTML = vehicles.map(v=>`<option value="${v.id}"${editM&&editM.vehicleId===v.id?' selected':''}>🚗 ${v.nombre}</option>`).join('');
+    document.getElementById('btn-delete-maint').style.display = editId ? 'block' : 'none';
     document.getElementById('sheet-maint').classList.add('open');
   } else if (type === 'vehiculo') {
     document.getElementById('veh-nombre').value = '';
     document.getElementById('veh-patente').value = '';
     document.getElementById('veh-anio').value = '';
     document.getElementById('sheet-vehiculo').classList.add('open');
+  } else if (type === 'cierre') {
+    const totalInc = transactions.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+Number(t.importe),0);
+    const totalGast = transactions.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+Number(t.importe),0);
+    const neto = totalInc - totalGast;
+    document.getElementById('cierre-ing').textContent = fmt(totalInc);
+    document.getElementById('cierre-gast').textContent = fmt(totalGast);
+    const netoEl = document.getElementById('cierre-neto');
+    netoEl.textContent = (neto >= 0 ? '+' : '-') + fmt(neto);
+    netoEl.style.color = neto >= 0 ? 'var(--green)' : 'var(--red)';
+    const now = new Date();
+    document.getElementById('cierre-label').value = MONTHS_ES[now.getMonth()] + ' ' + now.getFullYear();
+    document.getElementById('sheet-cierre').classList.add('open');
   }
 };
 window.closeSheet = function(t) { document.getElementById('sheet-'+t).classList.remove('open'); };
 
-// ── SAVE ACTIONS ──────────────────────────────────────────────────────────────
+// ── SAVE / EDIT TRANSACCIONES ──────────────────────────────────────────────
 window.saveTx = async function() {
-  const isInc = txTab === 'ingresos';
+  const editId = document.getElementById('tx-edit-id').value;
+  const isInc = editId
+    ? transactions.find(t=>t.id===editId)?.tipo === 'ingreso'
+    : txTab === 'ingresos';
   const fecha = document.getElementById('tx-fecha').value;
   const importe = parseFloat(document.getElementById('tx-importe').value);
   const cat = document.getElementById('tx-cat').value;
@@ -753,22 +929,53 @@ window.saveTx = async function() {
   const btn = document.getElementById('btn-save-tx');
   btn.disabled = true; btn.textContent = 'Guardando...';
   try {
-    const ref = await addDoc(collection(db,'transactions'), {
-      userId: currentUser.uid, vehicleId: vId,
-      tipo: isInc ? 'ingreso' : 'gasto',
-      fecha, importe, categoria: cat, detalle,
-      createdAt: new Date().toISOString()
-    });
-    transactions.unshift({ id:ref.id, userId:currentUser.uid, vehicleId:vId, tipo:isInc?'ingreso':'gasto', fecha, importe, categoria:cat, detalle });
+    if (editId) {
+      // EDITAR
+      await updateDoc(doc(db,'transactions',editId), { fecha, importe, categoria: cat, detalle, vehicleId: vId });
+      const idx = transactions.findIndex(t=>t.id===editId);
+      if (idx !== -1) transactions[idx] = { ...transactions[idx], fecha, importe, categoria:cat, detalle, vehicleId:vId };
+      showToast('✅ Registro actualizado');
+    } else {
+      // NUEVO
+      const ref = await addDoc(collection(db,'transactions'), {
+        userId: currentUser.uid, vehicleId: vId,
+        tipo: isInc ? 'ingreso' : 'gasto',
+        fecha, importe, categoria: cat, detalle,
+        createdAt: new Date().toISOString()
+      });
+      transactions.unshift({ id:ref.id, userId:currentUser.uid, vehicleId:vId, tipo:isInc?'ingreso':'gasto', fecha, importe, categoria:cat, detalle });
+      showToast(isInc ? '✅ Ingreso guardado' : '✅ Gasto guardado');
+    }
     closeSheet('tx');
     renderTransactions();
     renderDashboard();
-    showToast(isInc ? '✅ Ingreso guardado' : '✅ Gasto guardado');
   } catch(e) { showToast('Error: '+e.message); }
-  btn.disabled = false; btn.textContent = isInc ? 'Guardar ingreso' : 'Guardar gasto';
+  btn.disabled = false;
+  btn.textContent = document.getElementById('tx-edit-id').value ? 'Guardar cambios' : (isInc ? 'Guardar ingreso' : 'Guardar gasto');
 };
 
+window.deleteTxFromSheet = function() {
+  const id = document.getElementById('tx-edit-id').value;
+  if (!id) return;
+  closeSheet('tx');
+  openConfirm('Eliminar registro', '¿Seguro que querés eliminar este movimiento? Esta acción no se puede deshacer.', 'Eliminar', 'btn-confirm-danger', async () => {
+    await deleteTx(id);
+  });
+};
+
+async function deleteTx(id) {
+  try {
+    await deleteDoc(doc(db,'transactions',id));
+    transactions = transactions.filter(t => t.id !== id);
+    renderTransactions();
+    renderDashboard();
+    showToast('🗑 Registro eliminado');
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
+// ── SAVE / EDIT MANTENIMIENTOS ─────────────────────────────────────────────
 window.saveMaint = async function() {
+  const editId = document.getElementById('maint-edit-id').value;
   const fecha = document.getElementById('maint-fecha').value;
   const km = parseInt(document.getElementById('maint-km').value);
   const detalle = document.getElementById('maint-detalle').value;
@@ -777,18 +984,40 @@ window.saveMaint = async function() {
   const btn = document.getElementById('btn-save-maint');
   btn.disabled = true;
   try {
-    const ref = await addDoc(collection(db,'maintenances'), {
-      userId: currentUser.uid, vehicleId: vId, fecha, km, detalle,
-      createdAt: new Date().toISOString()
-    });
-    maintenances.unshift({ id:ref.id, vehicleId:vId, fecha, km, detalle });
+    if (editId) {
+      await updateDoc(doc(db,'maintenances',editId), { fecha, km, detalle, vehicleId: vId });
+      const idx = maintenances.findIndex(m=>m.id===editId);
+      if (idx !== -1) maintenances[idx] = { ...maintenances[idx], fecha, km, detalle, vehicleId:vId };
+      showToast('✅ Mantenimiento actualizado');
+    } else {
+      const ref = await addDoc(collection(db,'maintenances'), {
+        userId: currentUser.uid, vehicleId: vId, fecha, km, detalle,
+        createdAt: new Date().toISOString()
+      });
+      maintenances.unshift({ id:ref.id, vehicleId:vId, fecha, km, detalle });
+      showToast('✅ Mantenimiento guardado');
+    }
     closeSheet('maint');
     renderMaintenances();
-    showToast('✅ Mantenimiento guardado');
   } catch(e) { showToast('Error: '+e.message); }
   btn.disabled = false;
 };
 
+window.deleteMaintFromSheet = function() {
+  const id = document.getElementById('maint-edit-id').value;
+  if (!id) return;
+  closeSheet('maint');
+  openConfirm('Eliminar mantenimiento', '¿Eliminar este registro de mantenimiento?', 'Eliminar', 'btn-confirm-danger', async () => {
+    try {
+      await deleteDoc(doc(db,'maintenances',id));
+      maintenances = maintenances.filter(m => m.id !== id);
+      renderMaintenances();
+      showToast('🗑 Mantenimiento eliminado');
+    } catch(e) { showToast('Error: '+e.message); }
+  });
+};
+
+// ── SAVE VEHICULO ──────────────────────────────────────────────────────────
 window.saveVehicle = async function() {
   const nombre = document.getElementById('veh-nombre').value.trim();
   const patente = document.getElementById('veh-patente').value.trim().toUpperCase();
@@ -813,6 +1042,7 @@ window.saveVehicle = async function() {
   btn.disabled = false;
 };
 
+// ── ACEITE ─────────────────────────────────────────────────────────────────
 window.updateOil = async function(vId, kmActual, kmObjetivo) {
   oilData[vId] = { kmActual, kmObjetivo };
   try {
@@ -825,11 +1055,55 @@ window.updateOil = async function(vId, kmActual, kmObjetivo) {
   renderDashboard();
 };
 
-// ── RENDER FUNCTIONS ──────────────────────────────────────────────────────────
+// ── CIERRE DE MES ──────────────────────────────────────────────────────────
+window.confirmarCierre = async function() {
+  const label = document.getElementById('cierre-label').value.trim();
+  const totalInc = transactions.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+Number(t.importe),0);
+  const totalGast = transactions.filter(t=>t.tipo==='gasto').reduce((s,t)=>s+Number(t.importe),0);
+  const neto = totalInc - totalGast;
+  closeSheet('cierre');
+  openConfirm(
+    '¿Cerrar el mes?',
+    `Se archivarán los totales de "${label || 'este mes'}" y se eliminarán todos los ingresos y gastos del período actual.`,
+    'Sí, cerrar',
+    'btn-confirm-ok',
+    async () => {
+      showLoading(true);
+      try {
+        // 1. Guardar archivo
+        const archiveRef = await addDoc(collection(db,'month_archives'), {
+          userId: currentUser.uid,
+          label: label || 'Mes cerrado',
+          ingresos: totalInc,
+          gastos: totalGast,
+          neto,
+          closedAt: new Date().toISOString(),
+          txCount: transactions.length
+        });
+        monthArchives.unshift({ id:archiveRef.id, label: label||'Mes cerrado', ingresos:totalInc, gastos:totalGast, neto, closedAt:new Date().toISOString() });
+
+        // 2. Eliminar todas las transacciones actuales de Firestore
+        const deletePromises = transactions.map(t => deleteDoc(doc(db,'transactions',t.id)));
+        await Promise.all(deletePromises);
+        transactions = [];
+
+        showLoading(false);
+        renderDashboard();
+        renderTransactions();
+        showToast('✅ Mes cerrado y archivado');
+      } catch(e) {
+        showLoading(false);
+        showToast('Error: '+e.message);
+      }
+    }
+  );
+};
+
+// ── RENDER FUNCTIONS ───────────────────────────────────────────────────────
 function fmt(n) { return '$' + Math.abs(Number(n)).toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:0}); }
 function fmtDate(d) { if (!d) return ''; const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`; }
 
-function txHTML(t) {
+function txHTML(t, showActions = true) {
   const v = vehicles.find(v=>v.id===t.vehicleId);
   const isInc = t.tipo === 'ingreso';
   return `<div class="tx-item">
@@ -840,8 +1114,18 @@ function txHTML(t) {
       <div class="tx-date">${fmtDate(t.fecha)}${v?' · '+v.nombre:''}</div>
     </div>
     <div class="tx-amount ${isInc?'income':'expense'}">${isInc?'+':'-'}${fmt(t.importe)}</div>
+    ${showActions ? `<div class="tx-actions">
+      <button class="tx-btn edit" onclick="openSheet('tx','${t.id}')" title="Editar">✏️</button>
+      <button class="tx-btn del" onclick="confirmDeleteTx('${t.id}')" title="Eliminar">🗑</button>
+    </div>` : ''}
   </div>`;
 }
+
+window.confirmDeleteTx = function(id) {
+  openConfirm('Eliminar registro', '¿Seguro que querés eliminar este movimiento?', 'Eliminar', 'btn-confirm-danger', async () => {
+    await deleteTx(id);
+  });
+};
 
 function renderDashboard() {
   const totalInc = transactions.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+Number(t.importe),0);
@@ -851,6 +1135,19 @@ function renderDashboard() {
   document.getElementById('dash-ing').textContent = fmt(totalInc);
   document.getElementById('dash-gast').textContent = fmt(totalGast);
   document.getElementById('dash-sub').textContent = neto >= 0 ? 'Ganancia acumulada' : 'Pérdida acumulada';
+
+  // Banner cierre de mes — mostrar siempre para facilitar el acceso
+  const now = new Date();
+  const isEndOfMonth = now.getDate() >= 25; // sugerir desde el día 25
+  document.getElementById('cierre-banner-container').innerHTML = `
+    <div class="cierre-banner" onclick="openSheet('cierre')">
+      <div class="cierre-icon">📅</div>
+      <div class="cierre-text">
+        <div class="cierre-title">${isEndOfMonth ? '¡Es momento de cerrar el mes!' : 'Cerrar mes actual'}</div>
+        <div class="cierre-sub">Archivá los totales y empezá el mes nuevo en cero</div>
+      </div>
+      <div class="cierre-arrow">›</div>
+    </div>`;
 
   // Oil indicator
   const firstV = vehicles[0];
@@ -871,9 +1168,9 @@ function renderDashboard() {
     <div class="chart-bar-row"><div class="chart-bar-label" style="color:var(--red);font-weight:600;">Gastos</div><div class="chart-bar-track"><div class="chart-bar-fill expense" style="width:${(totalGast/max*100).toFixed(0)}%"></div></div><div class="chart-bar-amount" style="color:var(--red);">${fmt(totalGast)}</div></div>
   `;
 
-  // Recent
+  // Recent (sin botones de edición en dashboard para que quede limpio)
   document.getElementById('dash-recent').innerHTML = transactions.length ?
-    transactions.slice(0,5).map(txHTML).join('') :
+    transactions.slice(0,5).map(t => txHTML(t, false)).join('') :
     `<div class="empty-state"><div class="empty-icon">📭</div><p>Sin movimientos. ¡Registrá tu primer ingreso!</p></div>`;
 }
 
@@ -899,7 +1196,7 @@ function renderTransactions() {
   document.getElementById('tx-filters').innerHTML =
     `<div class="filter-pill active" onclick="filterTx(null,this)">Todos</div>` +
     cats.map(c=>`<div class="filter-pill" onclick="filterTx('${c}',this)">${catEmoji[c]||''} ${c}</div>`).join('');
-  document.getElementById('tx-list').innerHTML = txs.length ? txs.map(txHTML).join('') :
+  document.getElementById('tx-list').innerHTML = txs.length ? txs.map(t => txHTML(t, true)).join('') :
     `<div class="empty-state"><div class="empty-icon">📭</div><p>Sin ${isInc?'ingresos':'gastos'} registrados</p></div>`;
 }
 
@@ -909,7 +1206,7 @@ window.filterTx = function(cat, el) {
   const isInc = txTab === 'ingresos';
   let txs = transactions.filter(t => t.tipo === (isInc?'ingreso':'gasto'));
   if (cat) txs = txs.filter(t=>t.categoria===cat);
-  document.getElementById('tx-list').innerHTML = txs.length ? txs.map(txHTML).join('') :
+  document.getElementById('tx-list').innerHTML = txs.length ? txs.map(t => txHTML(t, true)).join('') :
     `<div class="empty-state"><div class="empty-icon">📭</div><p>Sin registros</p></div>`;
 };
 
@@ -919,13 +1216,30 @@ function renderMaintenances() {
     maintenances.map(m => {
       const v = vehicles.find(v=>v.id===m.vehicleId);
       return `<div class="maint-item">
-        <div class="maint-top"><div class="maint-title">🔧 ${v?v.nombre:'Vehículo'}</div><div class="maint-km">${Number(m.km).toLocaleString('es-AR')} km</div></div>
-        <div class="maint-date">${fmtDate(m.fecha)}</div>
-        <div class="maint-detail">${m.detalle||'Sin detalle'}</div>
+        <div class="maint-body">
+          <div class="maint-top"><div class="maint-title">🔧 ${v?v.nombre:'Vehículo'}</div><div class="maint-km">${Number(m.km).toLocaleString('es-AR')} km</div></div>
+          <div class="maint-date">${fmtDate(m.fecha)}</div>
+          <div class="maint-detail">${m.detalle||'Sin detalle'}</div>
+        </div>
+        <div class="maint-actions">
+          <button class="tx-btn edit" onclick="openSheet('maint','${m.id}')" title="Editar">✏️</button>
+          <button class="tx-btn del" onclick="confirmDeleteMaint('${m.id}')" title="Eliminar">🗑</button>
+        </div>
       </div>`;
     }).join('') :
     `<div class="empty-state"><div class="empty-icon">🔧</div><p>Sin mantenimientos registrados</p></div>`;
 }
+
+window.confirmDeleteMaint = function(id) {
+  openConfirm('Eliminar mantenimiento', '¿Eliminar este registro de mantenimiento?', 'Eliminar', 'btn-confirm-danger', async () => {
+    try {
+      await deleteDoc(doc(db,'maintenances',id));
+      maintenances = maintenances.filter(m => m.id !== id);
+      renderMaintenances();
+      showToast('🗑 Mantenimiento eliminado');
+    } catch(e) { showToast('Error: '+e.message); }
+  });
+};
 
 function renderOil() {
   document.getElementById('oil-container').innerHTML = vehicles.length ?
@@ -996,12 +1310,47 @@ window.renderVehicles = function() {
     <div style="padding:0 16px;"><button onclick="openSheet('vehiculo')" style="width:100%;padding:14px;background:var(--accent);border:none;border-radius:12px;font-size:15px;font-weight:700;color:#0a2e28;cursor:pointer;">+ Agregar vehículo</button></div>`;
 };
 
-// ── TOAST ──────────────────────────────────────────────────────────────────────
+// ── HISTORIAL DE MESES ARCHIVADOS ──────────────────────────────────────────
+window.renderHistorial = function() {
+  const container = document.getElementById('historial-list');
+  if (!monthArchives.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>No hay meses cerrados aún.<br>Cerrá el mes desde el Dashboard.</p></div>`;
+    return;
+  }
+  container.innerHTML = monthArchives.map(a => {
+    const neto = a.neto;
+    const netoClass = neto >= 0 ? 'green' : 'red';
+    const dateStr = a.closedAt ? new Date(a.closedAt).toLocaleDateString('es-AR') : '';
+    return `<div class="archive-item">
+      <div class="archive-month">${a.label}</div>
+      <div class="archive-row">
+        <span class="archive-label">Ingresos</span>
+        <span class="archive-val green">+${fmt(a.ingresos)}</span>
+      </div>
+      <div class="archive-row">
+        <span class="archive-label">Gastos</span>
+        <span class="archive-val red">-${fmt(a.gastos)}</span>
+      </div>
+      <div class="archive-divider"></div>
+      <div class="archive-neto">
+        <span class="archive-neto-label">Resultado neto</span>
+        <span class="archive-neto-val ${netoClass}">${neto>=0?'+':'-'}${fmt(neto)}</span>
+      </div>
+      ${dateStr ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;">Cerrado el ${dateStr}</div>` : ''}
+    </div>`;
+  }).join('');
+};
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
 window.showToast = function(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 };
+
+// Exponer openSheet globalmente (necesario para los onclick del HTML)
+window.openSheet = openSheet;
+window.closeSheet = closeSheet;
 </script>
 </body>
 </html>
