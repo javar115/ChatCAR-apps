@@ -474,7 +474,6 @@
             }
         }
 
-        /* Optimizaciones iOS */
         html, body {
             width: 100%;
             height: 100%;
@@ -488,12 +487,10 @@
             user-select: text;
         }
 
-        /* Prevenir zoom en inputs */
         input {
             font-size: 16px !important;
         }
 
-        /* Smooth scroll en iOS */
         * {
             -webkit-tap-highlight-color: transparent;
         }
@@ -512,7 +509,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Notch support */
         @supports (padding: max(0px)) {
             .container {
                 padding-left: max(16px, env(safe-area-inset-left));
@@ -521,7 +517,6 @@
             }
         }
 
-        /* Status bar color */
         @media (prefers-color-scheme: light) {
             body {
                 background: #f3f4f6;
@@ -533,19 +528,15 @@
     <div id="app"></div>
 
     <script>
-        // Registrar Service Worker (opcional, no crítico)
         if ('serviceWorker' in navigator) {
             const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             const isHTTPS = location.protocol === 'https:';
             
             if (isLocalHost || isHTTPS) {
-                navigator.serviceWorker.register('sw.js').catch(err => {
-                    // No hacer nada - el app funciona sin Service Worker
-                });
+                navigator.serviceWorker.register('sw.js').catch(err => {});
             }
         }
 
-        // Aplicación completa
         class TravelCalculator {
             constructor() {
                 this.state = {
@@ -572,10 +563,19 @@
 
             loadTabla() {
                 const saved = localStorage.getItem('tabla');
-                return saved ? JSON.parse(saved) : {
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Migrar registros viejos que no tienen tarifa4
+                    if (parsed.tarifa4 === undefined) {
+                        parsed.tarifa4 = 350;
+                    }
+                    return parsed;
+                }
+                return {
                     tarifa1: 7500,
                     tarifa2: 1400,
                     tarifa3: 1100,
+                    tarifa4: 350,
                     tarifaEspera: 400,
                     fechaActualizacion: new Date().toLocaleDateString('es-ES')
                 };
@@ -583,6 +583,31 @@
 
             saveTabla() {
                 localStorage.setItem('tabla', JSON.stringify(this.state.tabla));
+            }
+
+            calcularPrecio(distancia, tiempoEspera, tieneVuelta) {
+                let precio = 0;
+                const tabla = this.state.tabla;
+
+                if (distancia <= 10) {
+                    precio = tabla.tarifa1;
+                } else if (distancia <= 20) {
+                    precio = tabla.tarifa1 + (distancia - 10) * tabla.tarifa2;
+                } else if (distancia <= 100) {
+                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + (distancia - 20) * tabla.tarifa3;
+                } else {
+                    // Más de 100 km: suma todo lo anterior hasta 100 km + tarifa4 por cada km extra
+                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + 80 * tabla.tarifa3 + (distancia - 100) * tabla.tarifa4;
+                }
+
+                const precioEspera = tiempoEspera * tabla.tarifaEspera;
+                precio = precio + precioEspera;
+
+                if (tieneVuelta) {
+                    precio = precio * 1.5;
+                }
+
+                return { precioTotal: Math.round(precio), precioEspera: Math.round(precioEspera) };
             }
 
             registrarPaso(valor) {
@@ -612,27 +637,8 @@
             }
 
             calcularYGuardarViaje(distancia, tieneVuelta) {
-                let precio = 0;
-                const tabla = this.state.tabla;
                 const tiempoEspera = this.state.formData.tiempoEspera || 0;
-
-                // Calcular precio por distancia
-                if (distancia <= 10) {
-                    precio = tabla.tarifa1;
-                } else if (distancia <= 20) {
-                    precio = tabla.tarifa1 + (distancia - 10) * tabla.tarifa2;
-                } else if (distancia <= 100) {
-                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + (distancia - 20) * tabla.tarifa3;
-                }
-
-                // Agregar costo de tiempo de espera
-                const precioEspera = tiempoEspera * tabla.tarifaEspera;
-                precio = precio + precioEspera;
-
-                // Aplicar descuento de vuelta si aplica
-                if (tieneVuelta) {
-                    precio = precio * 1.5;
-                }
+                const { precioTotal, precioEspera } = this.calcularPrecio(distancia, tiempoEspera, tieneVuelta);
 
                 const nuevoViaje = {
                     id: Date.now(),
@@ -641,9 +647,9 @@
                     destino: this.state.formData.destino,
                     distancia: distancia,
                     tiempoEspera: tiempoEspera,
-                    precioDistancia: Math.round(precio - precioEspera),
+                    precioDistancia: Math.round(precioTotal - precioEspera),
                     precioEspera: Math.round(precioEspera),
-                    precio: Math.round(precio),
+                    precio: Math.round(precioTotal),
                     vuelta: tieneVuelta,
                     fechaRegistro: new Date().toLocaleDateString('es-ES')
                 };
@@ -759,12 +765,16 @@
                                 <span class="table-value">$${this.state.tabla.tarifa1.toLocaleString()}</span>
                             </div>
                             <div class="table-row">
-                                <span class="table-label">11-20 km</span>
+                                <span class="table-label">11–20 km</span>
                                 <span class="table-value">$${this.state.tabla.tarifa2.toLocaleString()}/km</span>
                             </div>
                             <div class="table-row">
-                                <span class="table-label">21-100 km</span>
+                                <span class="table-label">21–100 km</span>
                                 <span class="table-value">$${this.state.tabla.tarifa3.toLocaleString()}/km</span>
+                            </div>
+                            <div class="table-row">
+                                <span class="table-label">Más de 100 km</span>
+                                <span class="table-value">$${this.state.tabla.tarifa4.toLocaleString()}/km</span>
                             </div>
                             <div class="table-row">
                                 <span class="table-label">Tiempo espera</span>
@@ -803,7 +813,6 @@
                 }
 
                 const paso = pasos[this.state.currentStep - 1];
-                const inputValue = this.state.formData[paso.field];
                 const progress = (this.state.currentStep / 5) * 100;
 
                 app.innerHTML = `
@@ -1037,6 +1046,16 @@
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label">Tarifa 4: Más de 100 km ($ por km)</label>
+                            <input 
+                                type="number"
+                                id="tarifa4"
+                                value="${this.state.editTabla.tarifa4}"
+                                oninput="app.actualizarEditTabla('tarifa4', this.value)"
+                            >
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">Tarifa de Espera: ($ por minuto)</label>
                             <input 
                                 type="number"
@@ -1138,6 +1157,7 @@
                     tarifa1: this.state.editTabla.tarifa1,
                     tarifa2: this.state.editTabla.tarifa2,
                     tarifa3: this.state.editTabla.tarifa3,
+                    tarifa4: this.state.editTabla.tarifa4,
                     tarifaEspera: this.state.editTabla.tarifaEspera,
                     fechaActualizacion: new Date().toLocaleDateString('es-ES')
                 };
@@ -1177,41 +1197,22 @@
 
                 const nuevoTiempoEspera = parseFloat(prompt('Tiempo de espera (minutos):', viaje.tiempoEspera || 0)) || 0;
 
-                // Recalcular precio
-                let precio = 0;
-                const tabla = this.state.tabla;
+                const { precioTotal, precioEspera } = this.calcularPrecio(nuevoDistancia, nuevoTiempoEspera, viaje.vuelta);
 
-                if (nuevoDistancia <= 10) {
-                    precio = tabla.tarifa1;
-                } else if (nuevoDistancia <= 20) {
-                    precio = tabla.tarifa1 + (nuevoDistancia - 10) * tabla.tarifa2;
-                } else if (nuevoDistancia <= 100) {
-                    precio = tabla.tarifa1 + 10 * tabla.tarifa2 + (nuevoDistancia - 20) * tabla.tarifa3;
-                }
-
-                const precioEspera = nuevoTiempoEspera * tabla.tarifaEspera;
-                precio = precio + precioEspera;
-
-                if (viaje.vuelta) {
-                    precio = precio * 1.5;
-                }
-
-                // Actualizar viaje
                 viaje.pasajero = nuevoPasajero;
                 viaje.inicio = nuevoInicio;
                 viaje.destino = nuevoDestino;
                 viaje.distancia = nuevoDistancia;
                 viaje.tiempoEspera = nuevoTiempoEspera;
-                viaje.precioDistancia = Math.round(precio - precioEspera);
+                viaje.precioDistancia = Math.round(precioTotal - precioEspera);
                 viaje.precioEspera = Math.round(precioEspera);
-                viaje.precio = Math.round(precio);
+                viaje.precio = Math.round(precioTotal);
 
                 this.saveViajes();
                 this.render();
             }
         }
 
-        // Inicializar aplicación
         const app = new TravelCalculator();
         window.app = app;
         app.render();
